@@ -1,75 +1,34 @@
-# Nuxt Minimal Starter
+# Kitchen Tracker
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Aplicación móvil para registrar la limpieza semanal y profunda de una cocina. Está construida con Nuxt 4, NuxtHub Database, VueUse, shadcn-vue y Cloudflare Pages.
 
-## Setup
-
-Make sure to install dependencies:
+## Desarrollo
 
 ```bash
-# npm
-npm install
-
-# pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
-npm run dev
-
-# pnpm
 pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+El desarrollo usa una base SQLite local en `.data/db/sqlite.db`. El PIN local es `2828` por defecto.
 
-Build the application for production:
+Puedes cambiar los valores sin modificar el código:
 
 ```bash
-# npm
-npm run build
+NUXT_CLEANING_PIN=2828 \
+NUXT_SESSION_SECRET='un-secreto-de-al-menos-32-caracteres' \
+pnpm dev
+```
 
-# pnpm
+## Comprobaciones
+
+```bash
+pnpm typecheck
+pnpm test
 pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
 ```
 
-Locally preview production build:
+## Cloudflare
 
-```bash
-# npm
-npm run preview
+La compilación usa el preset `cloudflare-pages` y el driver D1 de NuxtHub en producción. Configura una base D1 y su binding `DB` en Cloudflare; el identificador se puede proporcionar mediante `NUXT_HUB_CLOUDFLARE_DATABASE_ID`. El PIN y `NUXT_SESSION_SECRET` deben configurarse como variables privadas del proyecto.
 
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+La lista inicial está en [`shared/cleaning.ts`](./shared/cleaning.ts). El estado persistido se guarda como un único documento JSON en la tabla `cleaning_state`; cada tarea mantiene su historial de eventos `{ id, timestamp, by }`.

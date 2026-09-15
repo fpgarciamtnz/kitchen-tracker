@@ -1,6 +1,9 @@
+<script setup lang="ts">
+const session = useSession()
+await callOnce('session', () => session.refresh())
+</script>
+
 <template>
-  <div>
-    <NuxtRouteAnnouncer />
-    <NuxtWelcome />
-  </div>
+  <NuxtRouteAnnouncer />
+  <NuxtLayout><NuxtPage /></NuxtLayout>
 </template>
