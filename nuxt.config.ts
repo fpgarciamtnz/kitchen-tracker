@@ -11,7 +11,12 @@ export default defineNuxtConfig({
       ? { dialect: 'sqlite', driver: 'd1', connection: { databaseId: process.env.NUXT_HUB_CLOUDFLARE_DATABASE_ID } }
       : { dialect: 'sqlite', driver: 'libsql', connection: { url: 'file:.data/db/sqlite.db' } }
   },
-  nitro: { preset: 'cloudflare-pages' },
+  nitro: {
+    preset: 'cloudflare_module',
+    cloudflare: {
+      wrangler: { name: 'kitchen-tracker' }
+    }
+  },
   runtimeConfig: {
     cleaningPin: process.env.NUXT_CLEANING_PIN || '2828',
     sessionSecret: process.env.NUXT_SESSION_SECRET || 'kitchen-tracker-poc-session-secret',
