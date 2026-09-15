@@ -15,10 +15,13 @@
   "dependencies": {
     "@libsql/client": "^0.18.0",
     "@lucide/vue": "^1.46.0",
+    "@nuxtjs/i18n": "^10.6.0",
     "@vueuse/core": "^14.4.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
+    "evlog": "^2.29.0",
+    "h3": "^1.15.11",
     "nuxt": "^4.5.2",
     "reka-ui": "^2.10.4",
     "tailwind-merge": "^3.7.0",

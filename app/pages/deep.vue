@@ -1,6 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'cleaning' })
 const cleaning = useCleaning()
+const { t } = useI18n()
 await callOnce('cleaning-data', () => cleaning.refresh(), { mode: 'navigation' })
 </script>
-<template><CleaningPage type="weekly" title="Limpieza semanal" eyebrow="Lo que está en contacto con el trabajo diario" /></template>
+<template><CleaningPage type="deep" :title="t('cleaning.deepTitle')" :eyebrow="t('cleaning.deepDescription')" /></template>

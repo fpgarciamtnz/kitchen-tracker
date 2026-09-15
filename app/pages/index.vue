@@ -1,4 +1,4 @@
 <script setup lang="ts">
-await navigateTo('/semanal')
+await navigateTo('/weekly')
 </script>
 <template><span /></template>

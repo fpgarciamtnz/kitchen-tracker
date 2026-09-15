@@ -1,0 +1,26 @@
+{
+  "app": { "name": "Kitchen Tracker", "kitchen": "Kitchen" },
+  "nav": { "label": "Main navigation", "weekly": "Weekly", "deep": "Deep clean", "profile": "Profile" },
+  "common": { "retry": "Retry", "saving": "Saving...", "undo": "Undo" },
+  "pin": { "title": "Everything in its place.", "description": "Enter the kitchen PIN to get started.", "label": "Access PIN", "submit": "Enter", "checking": "Checking...", "invalid": "That PIN is incorrect. Try again.", "unavailable": "We couldn't connect. Please try again." },
+  "profile": { "setup": "Before you start", "title": "Your name", "setupTitle": "What's your name?", "description": "This name will appear next to the tasks you complete.", "label": "Name or initials", "placeholder": "Your name", "help": "At least two characters. We'll remember it on this device.", "start": "Get started", "save": "Save changes", "saved": "Name saved.", "invalid": "Enter a name between 2 and 60 characters.", "saveError": "Your name couldn't be saved. Please try again." },
+  "cleaning": {
+    "weeklyTitle": "Weekly cleaning", "weeklyDescription": "The areas you use every day.",
+    "deepTitle": "Deep cleaning", "deepDescription": "The areas that need moving things and a thorough clean.",
+    "select": "Select {task}", "lastBy": "Last cleaned by {name}", "today": "Today", "daysAgo": "Today | 1 day ago | {count} days ago",
+    "empty": "No tasks yet.", "loading": "Loading tasks", "completed": "Cleaning saved", "cancel": "Clear selection", "selected": "{count} selected", "complete": "Complete tasks",
+    "loadError": "The list couldn't be loaded. Please try again.", "saveError": "Cleaning wasn't saved. Your selection is still here so you can retry.", "undoError": "The change couldn't be undone. Please try again."
+  },
+  "tasks": {
+    "inside-fridges": { "title": "Inside the fridges", "description": "Remove the drawers. Clean the floor and walls, including the inside of the door." },
+    "plastic-boxes": { "title": "Plastic box storage area", "description": "Remove the boxes. Clean the area with degreaser, soap and water." },
+    "oven-area": { "title": "Around the oven", "description": "Remove spare items and lids. Clean the gastronorm tray and the top of the oven." },
+    "storage": { "title": "Clean and organize the storeroom", "description": "Clear the window area. Clean with soap and water, dry it, and set aside unused items." },
+    "under-sink": { "title": "Under the sink", "description": "Check that everything is dry and in its place." },
+    "inside-extraction-bell": { "title": "Inside the extraction hood", "description": "Remove the cover and apply degreaser throughout, including around the extraction duct." },
+    "behind-fridges": { "title": "Behind the fridges and freezer", "description": "Move the fridges. Sweep the area and clean the black panels and any built-up dirt." },
+    "inside-oven": { "title": "Oven interior and door", "description": "Remove the metal rails. Clean the walls and floor with soap and water, and remove crumbs from the door." },
+    "induction-stoves": { "title": "Behind and below the induction hob", "description": "Degrease the fan area and underside. Clean the filters." },
+    "dishwasher": { "title": "Dishwasher door and interior", "description": "Drain the water, scrub the walls and clean beneath the metal parts by hand. Run a cycle and clean the seal." }
+  }
+}

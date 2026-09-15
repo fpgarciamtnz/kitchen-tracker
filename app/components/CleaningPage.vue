@@ -4,6 +4,7 @@ import type { CleaningType } from '#shared/cleaning'
 import { Button } from '~/components/ui/button'
 
 const props = defineProps<{ type: CleaningType, title: string, eyebrow: string }>()
+const { t } = useI18n()
 const cleaning = useCleaning()
 const { data, selected, saving, loading, error } = cleaning
 const profile = useProfile()
@@ -21,9 +22,8 @@ onBeforeUnmount(() => cleaning.clearSelection())
 function formatRelative(value?: string) {
   if (!value) return ''
   const days = Math.floor((Date.now() - new Date(value).getTime()) / 86_400_000)
-  if (days <= 0) return 'Hoy'
-  if (days === 1) return 'Hace 1 día'
-  return `Hace ${days} días`
+  if (days <= 0) return t('cleaning.today')
+  return t('cleaning.daysAgo', days)
 }
 
 async function complete() {
@@ -43,48 +43,48 @@ async function undo() {
 <template>
   <main class="mx-auto max-w-xl px-5 pb-10 pt-10 sm:px-8">
     <header class="mb-8">
-      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Cocina · {{ type === 'weekly' ? '01' : '02' }}</p>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-accent">{{ t('app.kitchen') }} · {{ type === 'weekly' ? '01' : '02' }}</p>
       <h1 class="mt-3 text-4xl font-semibold tracking-tight">{{ title }}</h1>
       <p class="mt-4 max-w-md text-sm leading-6 text-stone-600">{{ eyebrow }}</p>
     </header>
 
     <div v-if="error" class="mb-4 flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
       <span>{{ error }}</span>
-      <button class="font-semibold underline" @click="cleaning.refresh">Reintentar</button>
+      <button class="font-semibold underline" @click="cleaning.refresh">{{ t('common.retry') }}</button>
     </div>
 
     <section aria-live="polite">
       <TransitionGroup name="cleaning-list" tag="div" class="relative space-y-3">
         <article v-for="task in tasks" :key="task.id" class="task-card" :class="isSelected(task.id) && 'task-card-selected'">
           <label class="flex cursor-pointer gap-4 p-5">
-            <input type="checkbox" :checked="isSelected(task.id)" :aria-label="`Seleccionar ${task.title}`" class="task-checkbox mt-1" @change="cleaning.toggle(task.id)" />
+            <input type="checkbox" :checked="isSelected(task.id)" :aria-label="t('cleaning.select', { task: t(`tasks.${task.id}.title`) })" class="task-checkbox mt-1" @change="cleaning.toggle(task.id)" />
             <span class="min-w-0 flex-1">
               <span class="flex flex-wrap items-start justify-between gap-3">
-                <span class="text-lg font-semibold leading-tight text-ink">{{ task.title }}</span>
+                <span class="text-lg font-semibold leading-tight text-ink">{{ t(`tasks.${task.id}.title`) }}</span>
                 <span v-if="task.lastCleanedAt" class="shrink-0 rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-500">{{ formatRelative(task.lastCleanedAt) }}</span>
               </span>
-              <span v-if="task.description" class="mt-2 block text-sm leading-6 text-stone-600">{{ task.description }}</span>
-              <span v-if="task.lastCleanedBy" class="mt-3 block text-xs font-medium text-stone-400">Última vez: {{ task.lastCleanedBy }}</span>
+              <span class="mt-2 block text-sm leading-6 text-stone-600">{{ t(`tasks.${task.id}.description`) }}</span>
+              <span v-if="task.lastCleanedBy" class="mt-3 block text-xs font-medium text-stone-400">{{ t('cleaning.lastBy', { name: task.lastCleanedBy }) }}</span>
             </span>
           </label>
         </article>
       </TransitionGroup>
-      <div v-if="!tasks.length && !loading" class="rounded-2xl border border-dashed border-stone-300 bg-white/60 p-8 text-center text-sm text-stone-500">No hay tareas todavía.</div>
-      <div v-if="loading && !tasks.length" class="space-y-3" aria-label="Cargando tareas"><div v-for="i in 3" :key="i" class="h-32 animate-pulse rounded-2xl bg-white/70" /></div>
+      <div v-if="!tasks.length && !loading && !error" class="rounded-2xl border border-dashed border-stone-300 bg-white/60 p-8 text-center text-sm text-stone-500">{{ t('cleaning.empty') }}</div>
+      <div v-if="loading && !tasks.length" class="space-y-3" :aria-label="t('cleaning.loading')"><div v-for="i in 3" :key="i" class="h-32 animate-pulse rounded-2xl bg-white/70" /></div>
     </section>
 
     <Transition name="toast">
       <div v-if="showUndo" class="fixed inset-x-5 bottom-28 z-20 mx-auto flex max-w-xl items-center justify-between gap-4 rounded-2xl bg-ink px-4 py-3 text-sm text-white shadow-xl">
-        <span>Tarea completada</span><Button variant="ghost" size="sm" class="text-accent-soft hover:bg-white/10 hover:text-white" @click="undo">Deshacer</Button>
+        <span>{{ t('cleaning.completed') }}</span><Button variant="ghost" size="sm" class="text-accent-soft hover:bg-white/10 hover:text-white" @click="undo">{{ t('common.undo') }}</Button>
       </div>
     </Transition>
 
     <Transition name="toolbar">
       <div v-if="selected.length" class="fixed inset-x-0 top-0 z-30 border-b border-stone-200 bg-white/95 px-5 py-4 shadow-sm backdrop-blur">
         <div class="mx-auto flex max-w-xl items-center justify-between gap-3">
-          <Button variant="ghost" size="icon" aria-label="Cancelar selección" @click="cleaning.clearSelection"><ArrowLeft :size="20" /></Button>
-          <span class="text-sm font-semibold text-ink">{{ selectedTasks.length }} seleccionada{{ selectedTasks.length === 1 ? '' : 's' }}</span>
-          <Button :disabled="saving || profile.name.value.length < 2" @click="complete">{{ saving ? 'Guardando…' : 'Completar tarea' }}<CheckCircle2 :size="17" /></Button>
+          <Button variant="ghost" size="icon" :aria-label="t('cleaning.cancel')" @click="cleaning.clearSelection"><ArrowLeft :size="20" /></Button>
+          <span class="text-sm font-semibold text-ink">{{ t('cleaning.selected', { count: selectedTasks.length }) }}</span>
+          <Button :disabled="saving || profile.name.value.length < 2" @click="complete">{{ saving ? t('common.saving') : t('cleaning.complete') }}<CheckCircle2 :size="17" /></Button>
         </div>
       </div>
     </Transition>

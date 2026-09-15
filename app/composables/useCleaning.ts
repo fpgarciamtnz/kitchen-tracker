@@ -1,9 +1,12 @@
+import { log } from 'evlog/client'
+import { getFailureContext } from '#shared/observability'
 import type { CleaningTaskView } from '#shared/cleaning'
 
 type CleaningResponse = { weekly: CleaningTaskView[], deep: CleaningTaskView[] }
 type CompletionResponse = CleaningResponse & { events: { id: string }[] }
 
 export function useCleaning() {
+  const { t } = useI18n()
   const data = useState<CleaningResponse | null>('cleaning-data', () => null)
   const selected = useState<string[]>('cleaning-selected', () => [])
   const saving = useState('cleaning-saving', () => false)
@@ -17,8 +20,9 @@ export function useCleaning() {
     error.value = null
     try {
       data.value = await requestFetch<CleaningResponse>('/api/cleaning')
-    } catch {
-      error.value = 'No se ha podido cargar la lista. Inténtalo de nuevo.'
+    } catch (cause) {
+      log.error({ action: 'cleaning_load_failed', endpoint: '/api/cleaning', ...getFailureContext(cause) })
+      error.value = t('cleaning.loadError')
     } finally {
       loading.value = false
     }
@@ -42,10 +46,12 @@ export function useCleaning() {
       })
       data.value = { weekly: response.weekly, deep: response.deep }
       undoEvents.value = response.events.map(event => event.id)
+      log.info({ action: 'cleaning_saved', taskCount: response.events.length })
       clearSelection()
       return true
-    } catch {
-      error.value = 'No se ha guardado la limpieza. Tu selección sigue aquí para reintentar.'
+    } catch (cause) {
+      log.error({ action: 'cleaning_save_failed', endpoint: '/api/cleaning/complete', taskCount: selected.value.length, ...getFailureContext(cause) })
+      error.value = t('cleaning.saveError')
       return false
     } finally {
       saving.value = false
@@ -61,10 +67,12 @@ export function useCleaning() {
         method: 'POST', body: { eventIds: [...undoEvents.value] }
       })
       data.value = response
+      log.info({ action: 'cleaning_undone', taskCount: undoEvents.value.length })
       undoEvents.value = []
       return true
-    } catch {
-      error.value = 'No se ha podido deshacer. Inténtalo de nuevo.'
+    } catch (cause) {
+      log.error({ action: 'cleaning_undo_failed', endpoint: '/api/cleaning/undo', ...getFailureContext(cause) })
+      error.value = t('cleaning.undoError')
       return false
     } finally {
       saving.value = false

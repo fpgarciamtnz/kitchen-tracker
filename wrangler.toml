@@ -2,8 +2,21 @@ name = "kitchen-tracker"
 compatibility_date = "2026-09-15"
 compatibility_flags = ["nodejs_compat"]
 
+[[d1_databases]]
+binding = "DB"
+database_name = "kitchen-tracker-db"
+database_id = "d48a29c4-daf4-42a4-81cc-6c211d9d8e98"
+migrations_table = "_hub_migrations"
+
 [observability]
 enabled = true
+redact_query_string = true
+
+[observability.logs]
+enabled = true
+invocation_logs = false
+head_sampling_rate = 1
 
 [observability.traces]
 enabled = true
+head_sampling_rate = 0.1

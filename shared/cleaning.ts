@@ -2,8 +2,6 @@ export type CleaningType = 'weekly' | 'deep'
 
 export type CleaningTask = {
   id: string
-  title: string
-  description?: string
   type: CleaningType
   order: number
 }
@@ -13,16 +11,16 @@ export type CleaningState = { version: 1; items: Record<string, { history: Clean
 export type CleaningTaskView = CleaningTask & { history: CleaningEvent[]; lastCleanedAt?: string; lastCleanedBy?: string }
 
 export const cleaningTasks: CleaningTask[] = [
-  { id: 'inside-fridges', title: 'Interior de los frigoríficos', description: 'Saca los cajones. Limpia el suelo y las paredes, incluido el lateral interior de la puerta.', type: 'weekly', order: 1 },
-  { id: 'plastic-boxes', title: 'Zona de cajas de plástico', description: 'Retira las cajas. Usa desengrasante, agua y jabón para limpiar la zona.', type: 'weekly', order: 2 },
-  { id: 'oven-area', title: 'Zona exterior del horno', description: 'Retira los trastos y las tapas que sobren. Limpia el gastro y la parte superior del horno.', type: 'weekly', order: 3 },
-  { id: 'storage', title: 'Secar, limpiar y ordenar almacén', description: 'Retira todo de la zona de la ventana. Limpia con agua y jabón y aparta lo que no se use.', type: 'weekly', order: 4 },
-  { id: 'under-sink', title: 'Ordenar debajo del fregadero', description: 'Comprueba que todo esté seco y que cada cosa esté en su sitio.', type: 'weekly', order: 5 },
-  { id: 'inside-extraction-bell', title: 'Interior de la campana', description: 'Retira la cubierta y aplica desengrasante en todas las zonas, también junto al tubo de extracción.', type: 'deep', order: 1 },
-  { id: 'behind-fridges', title: 'Detrás de frigoríficos y congelador', description: 'Mueve los frigoríficos. Barre la zona y limpia los paneles negros y la suciedad acumulada.', type: 'deep', order: 2 },
-  { id: 'inside-oven', title: 'Interior y puerta del horno', description: 'Retira las guías metálicas. Limpia paredes y suelo con agua y jabón y quita las migas de la puerta.', type: 'deep', order: 3 },
-  { id: 'induction-stoves', title: 'Parte trasera y baja de inducción', description: 'Usa desengrasante para limpiar la zona del ventilador y la parte inferior. Limpia los filtros.', type: 'deep', order: 4 },
-  { id: 'dishwasher', title: 'Puerta e interior del lavavajillas', description: 'Retira el agua, frota las paredes y limpia a mano bajo las piezas metálicas. Haz un ciclo y limpia la junta.', type: 'deep', order: 5 }
+  { id: 'inside-fridges', type: 'weekly', order: 1 },
+  { id: 'plastic-boxes', type: 'weekly', order: 2 },
+  { id: 'oven-area', type: 'weekly', order: 3 },
+  { id: 'storage', type: 'weekly', order: 4 },
+  { id: 'under-sink', type: 'weekly', order: 5 },
+  { id: 'inside-extraction-bell', type: 'deep', order: 1 },
+  { id: 'behind-fridges', type: 'deep', order: 2 },
+  { id: 'inside-oven', type: 'deep', order: 3 },
+  { id: 'induction-stoves', type: 'deep', order: 4 },
+  { id: 'dishwasher', type: 'deep', order: 5 }
 ]
 
 export function createEmptyCleaningState(): CleaningState {

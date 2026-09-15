@@ -4,8 +4,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (session.loading.value) await session.refresh()
   if (!session.authenticated.value) return navigateTo('/pin')
 
-  if (import.meta.client && to.path !== '/perfil') {
+  if (import.meta.client && to.path !== '/profile') {
     const { name } = useProfile()
-    if (name.value.trim().length < 2) return navigateTo('/perfil?setup=1')
+    if (name.value.trim().length < 2) return navigateTo('/profile?setup=1')
   }
 })
