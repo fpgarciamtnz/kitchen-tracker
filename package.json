@@ -1,0 +1,7 @@
+{
+  "name": "kitchen-tracker",
+  "private": true,
+  "type": "module",
+  "scripts": { "dev": "wrangler dev", "deploy": "wrangler deploy" },
+  "devDependencies": { "wrangler": "latest" }
+}
