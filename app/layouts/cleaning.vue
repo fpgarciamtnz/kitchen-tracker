@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { CalendarDays, Sparkles, UserRound } from '@lucide/vue'
+import { CalendarDays, Sparkles, UserRound, ClipboardList } from '@lucide/vue'
 
 const route = useRoute()
 const { t } = useI18n()
 const navigation = [
+  { to: '/prep', label: 'nav.prep', icon: ClipboardList },
   { to: '/weekly', label: 'nav.weekly', icon: CalendarDays },
   { to: '/deep', label: 'nav.deep', icon: Sparkles },
   { to: '/profile', label: 'nav.profile', icon: UserRound }
@@ -14,8 +15,8 @@ const navigation = [
   <div class="min-h-screen bg-paper pb-28">
     <slot />
     <nav :aria-label="t('nav.label')" class="safe-bottom fixed inset-x-0 bottom-0 z-30 border-t border-stone-200/80 bg-white/95 px-4 pt-2 backdrop-blur">
-      <div class="mx-auto grid max-w-xl grid-cols-3 gap-3">
-        <NuxtLink v-for="item in navigation" :key="item.to" :to="item.to" class="nav-item" :class="route.path === item.to && 'nav-item-active'" :aria-current="route.path === item.to ? 'page' : undefined">
+      <div class="mx-auto grid max-w-xl grid-cols-4 gap-1">
+        <NuxtLink v-for="item in navigation" :key="item.to" :to="item.to" class="nav-item" :class="(route.path === item.to || (item.to === '/prep' && route.path.startsWith('/prep/'))) && 'nav-item-active'" :aria-current="(route.path === item.to || (item.to === '/prep' && route.path.startsWith('/prep/'))) ? 'page' : undefined">
           <span class="nav-icon"><component :is="item.icon" :size="22" :stroke-width="1.75" aria-hidden="true" /></span>
           <span>{{ t(item.label) }}</span>
         </NuxtLink>

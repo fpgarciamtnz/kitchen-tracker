@@ -16,7 +16,7 @@ async function submit() {
   error.value = ''
   try {
     await verify(pin.value)
-    await navigateTo('/weekly')
+    await navigateTo('/prep')
   } catch (cause) {
     error.value = t(getFailureContext(cause).status === 401 ? 'pin.invalid' : 'pin.unavailable')
     pin.value = ''

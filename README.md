@@ -1,6 +1,6 @@
 # Kitchen Tracker
 
-Aplicación móvil para registrar la limpieza semanal y profunda de una cocina. Está construida con Nuxt 4, NuxtHub Database, VueUse, shadcn-vue y Cloudflare Workers.
+Aplicación móvil para organizar la preparación del siguiente turno, recordar pedidos y registrar la limpieza semanal y profunda de una cocina. Está construida con Nuxt 4, NuxtHub Database, VueUse, shadcn-vue y Cloudflare Workers.
 
 ## Desarrollo
 
@@ -58,3 +58,15 @@ pnpm run deploy
 ```
 
 El commit `41e9cc0` sustituyó D1 por un namespace KV sin configurar. La corrección restaura D1 y su formato de datos original; no requiere crear KV ni migrar los registros de limpieza.
+
+## Prep list
+
+La entrada `/` abre `/prep`, la lista vigente. `/prep/create` confirma el reemplazo y empieza con cero ítems; `/prep/create?edit=1` permite continuar la lista actual. `/prep/menu` configura platos, genéricos, ítems y los ingredientes que recuerdan qué pedir. Las selecciones y el tachado se guardan al pulsar. Los campos de texto tienen su propio botón de guardar.
+
+Las notas pertenecen solo al turno. La order list se abre al final de ambas vistas y combina ingredientes vinculados con productos manuales. No hace pedidos ni calcula cantidades. Los cambios del menú conservan las tareas ya seleccionadas; al empezar otra lista se usa el menú actualizado.
+
+El estado vive en `prep_state`, en la misma conexión D1, con revisión atómica para detectar cambios de otro móvil. La migración nueva es `server/db/migrations/sqlite/0001_create_prep_state.sql`. NuxtHub la aplica en desarrollo; aplícala en producción mediante el flujo de migraciones anterior antes de desplegar la función.
+
+La impresión genera PDFs de 72 mm y abre Star PassPRNT con el mismo protocolo que la aplicación anterior. Requiere Star PassPRNT instalado y conectado a la impresora de cocina. También se puede descargar el PDF. Los recibos incluyen lo seleccionado y las notas completas, aunque se hayan tachado tareas en el móvil. La fecha se toma de la lista y no cambia al reimprimir por la mañana.
+
+El alcance y la auditoría están en [docs/prep-list-plan.md](docs/prep-list-plan.md).

@@ -1,29 +1,172 @@
 {
-  "app": { "name": "Kitchen Tracker", "kitchen": "Kitchen" },
-  "nav": { "label": "Main navigation", "weekly": "Weekly", "deep": "Deep clean", "profile": "Profile" },
-  "common": { "retry": "Retry", "saving": "Saving...", "undo": "Undo" },
-  "pin": { "title": "Everything in its place.", "description": "Enter the kitchen PIN to get started.", "label": "Access PIN", "submit": "Enter", "checking": "Checking...", "invalid": "That PIN is incorrect. Try again.", "unavailable": "We couldn't connect. Please try again." },
-  "profile": { "setup": "Before you start", "title": "Your name", "setupTitle": "What's your name?", "description": "This name will appear next to the tasks you complete.", "label": "Name or initials", "placeholder": "Your name", "help": "At least two characters. We'll remember it on this device.", "start": "Get started", "save": "Save changes", "saved": "Name saved.", "invalid": "Enter a name between 2 and 60 characters.", "saveError": "Your name couldn't be saved. Please try again." },
+  "app": {
+    "name": "Kitchen Tracker",
+    "kitchen": "Kitchen"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "weekly": "Weekly",
+    "deep": "Deep clean",
+    "profile": "Profile",
+    "prep": "Prep list"
+  },
+  "common": {
+    "retry": "Retry",
+    "saving": "Saving...",
+    "undo": "Undo"
+  },
+  "pin": {
+    "title": "Everything in its place.",
+    "description": "Enter the kitchen PIN to get started.",
+    "label": "Access PIN",
+    "submit": "Enter",
+    "checking": "Checking...",
+    "invalid": "That PIN is incorrect. Try again.",
+    "unavailable": "We couldn't connect. Please try again."
+  },
+  "profile": {
+    "setup": "Before you start",
+    "title": "Your name",
+    "setupTitle": "What's your name?",
+    "description": "This name will appear next to the tasks you complete.",
+    "label": "Name or initials",
+    "placeholder": "Your name",
+    "help": "At least two characters. We'll remember it on this device.",
+    "start": "Get started",
+    "save": "Save changes",
+    "saved": "Name saved.",
+    "invalid": "Enter a name between 2 and 60 characters.",
+    "saveError": "Your name couldn't be saved. Please try again."
+  },
   "cleaning": {
-    "weeklyTitle": "Weekly cleaning", "weeklyDescription": "Tap the first task in the list when you complete it. It is the current priority.",
-    "deepTitle": "Deep cleaning", "deepDescription": "Tap the first task in the list when you complete it. It is the current priority.",
-    "howItWorks": "How it works", "select": "Mark {task} as done", "lastCleaned": "Last cleaned by {name} · {date}", "unknownPerson": "Unknown",
-    "empty": "No tasks yet.", "loading": "Loading tasks", "completed": "Cleaning saved", "cancel": "Clear selection", "selected": "{count} selected", "complete": "Complete tasks",
-    "loadError": "The list couldn't be loaded. Please try again.", "saveError": "Cleaning wasn't saved. Your selection is still here so you can retry.", "undoError": "The change couldn't be undone. Please try again."
+    "weeklyTitle": "Weekly cleaning",
+    "weeklyDescription": "Tap the first task in the list when you complete it. It is the current priority.",
+    "deepTitle": "Deep cleaning",
+    "deepDescription": "Tap the first task in the list when you complete it. It is the current priority.",
+    "howItWorks": "How it works",
+    "select": "Mark {task} as done",
+    "lastCleaned": "Last cleaned by {name} · {date}",
+    "unknownPerson": "Unknown",
+    "empty": "No tasks yet.",
+    "loading": "Loading tasks",
+    "completed": "Cleaning saved",
+    "cancel": "Clear selection",
+    "selected": "{count} selected",
+    "complete": "Complete tasks",
+    "loadError": "The list couldn't be loaded. Please try again.",
+    "saveError": "Cleaning wasn't saved. Your selection is still here so you can retry.",
+    "undoError": "The change couldn't be undone. Please try again."
   },
   "tasks": {
-    "inside-fridges": { "title": "Inside the fridges: cool section", "description": "Remove the drawers. Clean inside the door and the bottom." },
-    "oven-area": { "title": "Around the oven", "description": "Organize the area, bring out the gastronorm containers, clean the knife gastronorm container, and clean the top of the oven." },
-    "storage": { "title": "Dry storage", "description": "Remove everything from the top and bottom shelves. Send spices, boxes, and kitchen tools we do not use to Montergarden." },
-    "under-sink": { "title": "Under the sink", "description": "Make sure it is dry and well stocked." },
-    "inside-hot-section": { "title": "Inside the fridges: hot section" },
-    "plastic-boxes": { "title": "Plastic boxes area" },
-    "plates-shelf": { "title": "Plates shelf" },
-    "inside-extraction-bell": { "title": "Inside the extraction hood", "description": "Remove the covers, go up, and clean all surfaces inside with degreaser, water, and soap." },
-    "behind-fridges": { "title": "Behind the freezer", "description": "Pull out the freezer. Sweep, clean wax from the black boards, and wash them." },
-    "inside-oven": { "title": "Inside the oven", "description": "Clean the metal rails. Clean the inside by hand with water and soap. In the door area, remove crumbs from the gap and clean the rubber seal." },
-    "induction-stoves": { "title": "Induction units", "description": "Clean the filters and the fan area, including the back and bottom." },
-    "outside-extraction-hood": { "title": "Outside the extraction hood", "description": "Clean all surfaces without removing the covers, including the light area and the outside and top where possible." },
-    "dishwasher": { "title": "Dishwasher", "description": "Remove the water. Scrub the walls that are not usually scrubbed. Clean the inside of the door." }
+    "inside-fridges": {
+      "title": "Inside the fridges: cool section",
+      "description": "Remove the drawers. Clean inside the door and the bottom."
+    },
+    "oven-area": {
+      "title": "Around the oven",
+      "description": "Organize the area, bring out the gastronorm containers, clean the knife gastronorm container, and clean the top of the oven."
+    },
+    "storage": {
+      "title": "Dry storage",
+      "description": "Remove everything from the top and bottom shelves. Send spices, boxes, and kitchen tools we do not use to Montergarden."
+    },
+    "under-sink": {
+      "title": "Under the sink",
+      "description": "Make sure it is dry and well stocked."
+    },
+    "inside-hot-section": {
+      "title": "Inside the fridges: hot section"
+    },
+    "plastic-boxes": {
+      "title": "Plastic boxes area"
+    },
+    "plates-shelf": {
+      "title": "Plates shelf"
+    },
+    "inside-extraction-bell": {
+      "title": "Inside the extraction hood",
+      "description": "Remove the covers, go up, and clean all surfaces inside with degreaser, water, and soap."
+    },
+    "behind-fridges": {
+      "title": "Behind the freezer",
+      "description": "Pull out the freezer. Sweep, clean wax from the black boards, and wash them."
+    },
+    "inside-oven": {
+      "title": "Inside the oven",
+      "description": "Clean the metal rails. Clean the inside by hand with water and soap. In the door area, remove crumbs from the gap and clean the rubber seal."
+    },
+    "induction-stoves": {
+      "title": "Induction units",
+      "description": "Clean the filters and the fan area, including the back and bottom."
+    },
+    "outside-extraction-hood": {
+      "title": "Outside the extraction hood",
+      "description": "Clean all surfaces without removing the covers, including the light area and the outside and top where possible."
+    },
+    "dishwasher": {
+      "title": "Dishwasher",
+      "description": "Remove the water. Scrub the walls that are not usually scrubbed. Clean the inside of the door."
+    }
+  },
+  "prep": {
+    "title": "Prep list",
+    "view": "View list",
+    "create": "Create prep list",
+    "newList": "New prep list",
+    "choose": "Choose the prep",
+    "editList": "Edit current list",
+    "editMenu": "Edit menu",
+    "print": "Print",
+    "download": "Download receipt PDF",
+    "printError": "The receipt could not be created. Try again.",
+    "printHelp": "Printing opens Star PassPRNT. If it did not open, check the app on this device.",
+    "emptyTitle": "Ready for the next shift",
+    "emptyHelp": "Create a list of what needs preparing. It will appear here for the kitchen.",
+    "noTasks": "No prep items selected yet.",
+    "loading": "Loading the prep list…",
+    "loadError": "The prep list could not be loaded. Try again.",
+    "saveError": "The change was not saved. Try the action again.",
+    "conflict": "Someone changed the list. Reload to see the latest version before editing.",
+    "reload": "Reload list",
+    "freshTitle": "Start with nothing selected",
+    "replaceHelp": "This replaces the current list, notes and order list. All previous tasks are assumed complete, including tasks done on paper.",
+    "startHelp": "Go through each dish and select what the next shift needs to prepare.",
+    "forDate": "For",
+    "replace": "Replace and start empty",
+    "start": "Start empty list",
+    "cancel": "Keep current list",
+    "selected": "{count} selected",
+    "selectAll": "Select all items in {name}",
+    "all": "All",
+    "linked": "To order:",
+    "noItems": "No items here yet.",
+    "notes": "Notes for this shift",
+    "notesHelp": "Add any other instructions. These also appear on the printed prep list.",
+    "notesPlaceholder": "For example, prepare a sample for the new menu…",
+    "saveNotes": "Save notes",
+    "unsaved": "You have unsaved text. Leave without saving it?",
+    "order": "Order list",
+    "orderHelp": "Ingredients from the selected prep. Decide what to buy and the quantities when placing the order.",
+    "noLinked": "No linked ingredients.",
+    "manualOrder": "Other products",
+    "manualHelp": "One product per line. Add cleaning supplies or anything else to remember.",
+    "manualPlaceholder": "Dishwasher tablets\nBin bags",
+    "saveProducts": "Save products",
+    "backCreate": "Back to prep",
+    "menuHelp": "Edit dishes, their prep items and ingredients to order. Generics work like any other dish. Selected work stays on the current list.",
+    "newDish": "New dish",
+    "dishName": "Dish or group name",
+    "itemName": "Prep item",
+    "ingredients": "Ingredients to order · one per line",
+    "ingredientsPlaceholder": "Lettuce\nParmesan",
+    "addItem": "Add prep item",
+    "addDish": "Add dish or group",
+    "saveMenu": "Save menu",
+    "menuSaved": "Menu saved.",
+    "moveUp": "Move {name} up",
+    "moveDown": "Move {name} down",
+    "deleteGroup": "Delete {name}",
+    "deleteItem": "Remove {name}",
+    "removeGroup": "Delete this dish from the menu? Selected tasks stay on the current list."
   }
 }

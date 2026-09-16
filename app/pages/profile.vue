@@ -19,7 +19,7 @@ async function save() {
     log.info({ action: 'profile_saved' })
     error.value = ''
     saved.value = true
-    if (setup.value) await navigateTo('/weekly')
+    if (setup.value) await navigateTo('/prep')
   } catch (cause) {
     error.value = cause instanceof Error ? cause.message : t('profile.saveError')
   }

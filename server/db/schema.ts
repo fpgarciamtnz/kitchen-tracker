@@ -5,3 +5,5 @@ export const cleaningState = sqliteTable('cleaning_state', {
   payload: text('payload').notNull(),
   updatedAt: integer('updated_at').notNull()
 })
+
+export { prepState } from './prep-schema'
