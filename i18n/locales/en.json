@@ -5,8 +5,8 @@
   "pin": { "title": "Everything in its place.", "description": "Enter the kitchen PIN to get started.", "label": "Access PIN", "submit": "Enter", "checking": "Checking...", "invalid": "That PIN is incorrect. Try again.", "unavailable": "We couldn't connect. Please try again." },
   "profile": { "setup": "Before you start", "title": "Your name", "setupTitle": "What's your name?", "description": "This name will appear next to the tasks you complete.", "label": "Name or initials", "placeholder": "Your name", "help": "At least two characters. We'll remember it on this device.", "start": "Get started", "save": "Save changes", "saved": "Name saved.", "invalid": "Enter a name between 2 and 60 characters.", "saveError": "Your name couldn't be saved. Please try again." },
   "cleaning": {
-    "weeklyTitle": "Weekly cleaning", "weeklyDescription": "Tap a task to mark it done. Select several, then complete them together.",
-    "deepTitle": "Deep cleaning", "deepDescription": "Tap a task to mark it done. Select several, then complete them together.",
+    "weeklyTitle": "Weekly cleaning", "weeklyDescription": "Tap the first task in the list when you complete it. It is the current priority.",
+    "deepTitle": "Deep cleaning", "deepDescription": "Tap the first task in the list when you complete it. It is the current priority.",
     "howItWorks": "How it works", "select": "Mark {task} as done", "lastCleaned": "Last cleaned by {name} · {date}", "unknownPerson": "Unknown",
     "empty": "No tasks yet.", "loading": "Loading tasks", "completed": "Cleaning saved", "cancel": "Clear selection", "selected": "{count} selected", "complete": "Complete tasks",
     "loadError": "The list couldn't be loaded. Please try again.", "saveError": "Cleaning wasn't saved. Your selection is still here so you can retry.", "undoError": "The change couldn't be undone. Please try again."

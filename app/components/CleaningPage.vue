@@ -1,18 +1,31 @@
 <script setup lang="ts">
-import { ArrowLeft, CheckCircle2 } from '@lucide/vue'
+import { ArrowLeft, CheckCircle2, ChevronDown } from '@lucide/vue'
 import type { CleaningType } from '#shared/cleaning'
 import { Button } from '~/components/ui/button'
 
 const props = defineProps<{ type: CleaningType, title: string, eyebrow: string }>()
-const { t } = useI18n()
+const { t, te } = useI18n()
+const route = useRoute()
+const router = useRouter()
+const isPrototype = import.meta.dev
 const cleaning = useCleaning()
 const { data, selected, saving, loading, error } = cleaning
 const profile = useProfile()
 const showUndo = ref(false)
+const expandedTasks = ref<string[]>([])
 const tasks = computed(() => data.value?.[props.type] || [])
+const prototypeVariant = computed(() => ['a', 'b', 'c'].includes(String(route.query.variant)) ? String(route.query.variant) : 'a')
 const selectedTasks = computed(() => tasks.value.filter(task => selected.value.includes(task.id)))
 
 function isSelected(taskId: string) { return selected.value.includes(taskId) }
+function hasDescription(taskId: string) { return te(`tasks.${taskId}.description`) }
+function isExpanded(taskId: string) { return expandedTasks.value.includes(taskId) }
+function toggleExpanded(taskId: string) {
+  expandedTasks.value = isExpanded(taskId)
+    ? expandedTasks.value.filter(id => id !== taskId)
+    : [...expandedTasks.value, taskId]
+}
+function setPrototypeVariant(variant: string) { router.replace({ query: { ...route.query, variant } }) }
 
 onMounted(async () => {
   if (!cleaning.data.value) await cleaning.refresh()
@@ -60,18 +73,29 @@ async function undo() {
 
     <section aria-live="polite">
       <TransitionGroup name="cleaning-list" tag="div" class="relative overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-[0_8px_24px_rgba(37,28,22,0.04)]">
-        <article v-for="(task, index) in tasks" :key="task.id" class="task-row" :class="[isSelected(task.id) && 'task-row-selected', index < tasks.length - 1 && 'border-b border-stone-100']">
-          <label class="flex cursor-pointer gap-4 px-4 py-4 sm:px-5">
+        <article v-for="(task, index) in tasks" :key="task.id" class="task-row" :class="[isSelected(task.id) && 'task-row-selected', index < tasks.length - 1 && 'border-b border-stone-100', isPrototype && index === 0 && `next-task-${prototypeVariant}`]">
+          <div class="flex items-start gap-4 px-4 py-4 sm:px-5">
+            <span v-if="isPrototype && index === 0 && prototypeVariant === 'c'" class="next-step-number" aria-hidden="true">1</span>
             <input type="checkbox" :checked="isSelected(task.id)" :aria-label="t('cleaning.select', { task: t(`tasks.${task.id}.title`) })" class="task-checkbox mt-0.5" @change="cleaning.toggle(task.id)" />
-            <span class="min-w-0 flex-1">
-              <span class="block text-base font-semibold leading-tight text-ink">{{ t(`tasks.${task.id}.title`) }}</span>
+            <div class="min-w-0 flex-1">
+              <span v-if="isPrototype && index === 0 && prototypeVariant === 'b'" class="next-task-label">Next task</span>
+              <button v-if="hasDescription(task.id)" type="button" class="flex w-full items-start justify-between gap-3 text-left" :aria-expanded="isExpanded(task.id)" :aria-controls="`description-${task.id}`" @click="toggleExpanded(task.id)">
+                <span class="text-base font-semibold leading-tight text-ink">{{ t(`tasks.${task.id}.title`) }}</span>
+                <ChevronDown :size="18" class="mt-0.5 shrink-0 text-stone-500 transition-transform" :class="isExpanded(task.id) && 'rotate-180'" aria-hidden="true" />
+              </button>
+              <span v-else class="block text-base font-semibold leading-tight text-ink">{{ t(`tasks.${task.id}.title`) }}</span>
+              <p v-if="hasDescription(task.id) && isExpanded(task.id)" :id="`description-${task.id}`" class="mt-2 text-sm leading-6 text-stone-600">{{ t(`tasks.${task.id}.description`) }}</p>
               <span v-if="task.lastCleanedAt" class="mt-1.5 block text-xs text-stone-500">
                 {{ t('cleaning.lastCleaned', { name: task.lastCleanedBy || t('cleaning.unknownPerson'), date: formatDate(task.lastCleanedAt) }) }}
               </span>
-            </span>
-          </label>
+            </div>
+          </div>
         </article>
       </TransitionGroup>
+      <div v-if="isPrototype" class="prototype-switcher" aria-label="Highlight prototype variations">
+        <span>Highlight prototype</span>
+        <button v-for="variant in ['a', 'b', 'c']" :key="variant" type="button" :class="prototypeVariant === variant && 'active'" @click="setPrototypeVariant(variant)">{{ variant.toUpperCase() }}</button>
+      </div>
       <div v-if="!tasks.length && !loading && !error" class="rounded-2xl border border-dashed border-stone-300 bg-white/60 p-8 text-center text-sm text-stone-500">{{ t('cleaning.empty') }}</div>
       <div v-if="loading && !tasks.length" class="space-y-3" :aria-label="t('cleaning.loading')"><div v-for="i in 3" :key="i" class="h-32 animate-pulse rounded-2xl bg-white/70" /></div>
     </section>
@@ -100,6 +124,14 @@ async function undo() {
 .task-row { @apply transition-colors; }
 .task-row:hover { @apply bg-stone-50; }
 .task-row-selected { @apply bg-accent-soft/40; }
+.next-task-a { @apply border-l-4 border-accent bg-accent-soft/30; }
+.next-task-b { @apply bg-stone-50; }
+.next-task-c { @apply border-l-4 border-stone-300; }
+.next-task-label { @apply mb-1 block text-[10px] font-bold uppercase tracking-[0.18em] text-accent; }
+.next-step-number { @apply mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-white; }
+.prototype-switcher { @apply mt-3 flex items-center justify-center gap-2 text-xs text-stone-500; }
+.prototype-switcher button { @apply h-7 w-7 rounded-full border border-stone-300 font-semibold transition-colors; }
+.prototype-switcher button.active { @apply border-ink bg-ink text-white; }
 .cleaning-list-enter-active, .cleaning-list-leave-active { transition: all .35s ease; }
 .cleaning-list-enter-from, .cleaning-list-leave-to { opacity: 0; transform: translateY(-12px) scale(.98); }
 .cleaning-list-leave-active { position: absolute; width: 100%; }
