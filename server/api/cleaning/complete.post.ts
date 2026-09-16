@@ -4,7 +4,7 @@ import { completeCleaningTasks } from '../../utils/cleaning-state'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  log.set({ action: 'cleaning_complete', storage: 'kv' })
+  log.set({ action: 'cleaning_complete', storage: 'd1' })
   const body = await readBody<{ taskIds?: unknown, by?: unknown }>(event)
   const taskIds = Array.isArray(body?.taskIds) && body.taskIds.every(id => typeof id === 'string')
     ? [...new Set(body.taskIds)]

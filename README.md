@@ -29,11 +29,11 @@ pnpm build
 
 ## Cloudflare
 
-La compilación usa el preset `cloudflare_module` y el driver D1 de NuxtHub en producción. Configura una base D1 y su binding `DB` en Cloudflare; el identificador se puede proporcionar mediante `NUXT_HUB_CLOUDFLARE_DATABASE_ID`. El PIN y `NUXT_SESSION_SECRET` deben configurarse como variables privadas del proyecto.
+La compilación usa el preset `cloudflare_module` y el driver D1 de NuxtHub en producción. El binding `DB` de `wrangler.toml` apunta a la base D1 existente `kitchen-tracker-db`. Esa configuración se conserva en el archivo de despliegue generado por Nitro. El PIN y `NUXT_SESSION_SECRET` deben configurarse como variables privadas del proyecto.
 
 En Workers Builds, usa `pnpm run build` como comando de compilación y `pnpm run deploy` como comando de despliegue. El nombre `kitchen-tracker` se configura en `nitro.cloudflare.wrangler.name` dentro de `nuxt.config.ts`. Nitro genera `.output/server/wrangler.json` con el punto de entrada y los assets, y `.wrangler/deploy/config.json` dirige Wrangler a esa configuración. Estos archivos se generan durante la compilación y no se deben guardar en Git.
 
-La lista inicial está en [`shared/cleaning.ts`](./shared/cleaning.ts). El estado persistido se guarda como un único documento JSON en Cloudflare KV; cada tarea conserva solo sus dos eventos más recientes `{ id, timestamp, by }`.
+La lista inicial está en [`shared/cleaning.ts`](./shared/cleaning.ts). El estado persistido se guarda como un único documento JSON en la tabla `cleaning_state` de Cloudflare D1; cada tarea conserva solo sus dos eventos más recientes `{ id, timestamp, by }`.
 
 ## Idioma
 
@@ -49,10 +49,12 @@ No se registran PIN, cookies, nombres, cuerpos completos ni parámetros SQL. Los
 
 En Cloudflare, abre el Worker `kitchen-tracker` y su sección **Observability → Logs**. Filtra por `requestId`, `action`, `source` o `level`. `wrangler.toml` activa Logs, desactiva los logs rutinarios de invocación y conserva el 10% de las trazas. Los eventos que evlog decide conservar no se vuelven a muestrear en Workers Logs.
 
-Cloudflare KV usa el binding `CLEANING_KV` en `wrangler.toml`. Crea un namespace, copia su identificador en ese archivo y despliega:
+La tabla `cleaning_state` ya existe en producción. Su esquema está en `server/db/migrations/sqlite/0000_create_cleaning_state.sql`; usa `CREATE TABLE IF NOT EXISTS` y conserva los datos existentes. Para una instalación nueva, aplica las migraciones antes de desplegar:
 
 ```bash
-pnpm exec wrangler kv namespace create kitchen-tracker-cleaning
 pnpm run build
+pnpm exec wrangler d1 migrations apply kitchen-tracker-db --remote
 pnpm run deploy
 ```
+
+El commit `41e9cc0` sustituyó D1 por un namespace KV sin configurar. La corrección restaura D1 y su formato de datos original; no requiere crear KV ni migrar los registros de limpieza.

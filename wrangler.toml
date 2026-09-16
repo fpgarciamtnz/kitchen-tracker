@@ -2,10 +2,11 @@ name = "kitchen-tracker"
 compatibility_date = "2026-09-15"
 compatibility_flags = ["nodejs_compat"]
 
-# Create a KV namespace and replace this placeholder before deploying:
-[[kv_namespaces]]
-binding = "CLEANING_KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+[[d1_databases]]
+binding = "DB"
+database_name = "kitchen-tracker-db"
+database_id = "d48a29c4-daf4-42a4-81cc-6c211d9d8e98"
+migrations_table = "_hub_migrations"
 
 [observability]
 enabled = true

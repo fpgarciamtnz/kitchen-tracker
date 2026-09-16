@@ -37,6 +37,11 @@ export default defineNuxtConfig({
     '/profunda': { redirect: '/deep' },
     '/perfil': { redirect: '/profile' }
   },
+  hub: {
+    db: process.env.NODE_ENV === 'production'
+      ? { dialect: 'sqlite', driver: 'd1' }
+      : { dialect: 'sqlite', driver: 'libsql', connection: { url: 'file:.data/db/sqlite.db' } }
+  },
   nitro: {
     preset: 'cloudflare_module',
     cloudflare: {
