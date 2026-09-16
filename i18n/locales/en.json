@@ -12,15 +12,18 @@
     "loadError": "The list couldn't be loaded. Please try again.", "saveError": "Cleaning wasn't saved. Your selection is still here so you can retry.", "undoError": "The change couldn't be undone. Please try again."
   },
   "tasks": {
-    "inside-fridges": { "title": "Inside the fridges", "description": "Remove the drawers. Clean the floor and walls, including the inside of the door." },
-    "plastic-boxes": { "title": "Plastic box storage area", "description": "Remove the boxes. Clean the area with degreaser, soap and water." },
-    "oven-area": { "title": "Around the oven", "description": "Remove spare items and lids. Clean the gastronorm tray and the top of the oven." },
-    "storage": { "title": "Clean and organize the storeroom", "description": "Clear the window area. Clean with soap and water, dry it, and set aside unused items." },
-    "under-sink": { "title": "Under the sink", "description": "Check that everything is dry and in its place." },
-    "inside-extraction-bell": { "title": "Inside the extraction hood", "description": "Remove the cover and apply degreaser throughout, including around the extraction duct." },
-    "behind-fridges": { "title": "Behind the fridges and freezer", "description": "Move the fridges. Sweep the area and clean the black panels and any built-up dirt." },
-    "inside-oven": { "title": "Oven interior and door", "description": "Remove the metal rails. Clean the walls and floor with soap and water, and remove crumbs from the door." },
-    "induction-stoves": { "title": "Behind and below the induction hob", "description": "Degrease the fan area and underside. Clean the filters." },
-    "dishwasher": { "title": "Dishwasher door and interior", "description": "Drain the water, scrub the walls and clean beneath the metal parts by hand. Run a cycle and clean the seal." }
+    "inside-fridges": { "title": "Inside the fridges: cool section", "description": "Remove the drawers. Clean inside the door and the bottom." },
+    "oven-area": { "title": "Around the oven", "description": "Organize the area, bring out the gastronorm containers, clean the knife gastronorm container, and clean the top of the oven." },
+    "storage": { "title": "Dry storage", "description": "Remove everything from the top and bottom shelves. Send spices, boxes, and kitchen tools we do not use to Montergarden." },
+    "under-sink": { "title": "Under the sink", "description": "Make sure it is dry and well stocked." },
+    "inside-hot-section": { "title": "Inside the fridges: hot section" },
+    "plastic-boxes": { "title": "Plastic boxes area" },
+    "plates-shelf": { "title": "Plates shelf" },
+    "inside-extraction-bell": { "title": "Inside the extraction hood", "description": "Remove the covers, go up, and clean all surfaces inside with degreaser, water, and soap." },
+    "behind-fridges": { "title": "Behind the freezer", "description": "Pull out the freezer. Sweep, clean wax from the black boards, and wash them." },
+    "inside-oven": { "title": "Inside the oven", "description": "Clean the metal rails. Clean the inside by hand with water and soap. In the door area, remove crumbs from the gap and clean the rubber seal." },
+    "induction-stoves": { "title": "Induction units", "description": "Clean the filters and the fan area, including the back and bottom." },
+    "outside-extraction-hood": { "title": "Outside the extraction hood", "description": "Clean all surfaces without removing the covers, including the light area and the outside and top where possible." },
+    "dishwasher": { "title": "Dishwasher", "description": "Remove the water. Scrub the walls that are not usually scrubbed. Clean the inside of the door." }
   }
 }

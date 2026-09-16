@@ -4,7 +4,7 @@ import { undoCleaningEvents } from '../../utils/cleaning-state'
 
 export default defineEventHandler(async (event) => {
   const log = useLogger(event)
-  log.set({ action: 'cleaning_undo', storage: 'database' })
+  log.set({ action: 'cleaning_undo', storage: 'kv' })
   const body = await readBody<{ eventIds?: unknown }>(event)
   const eventIds = Array.isArray(body?.eventIds) && body.eventIds.every(id => typeof id === 'string')
     ? [...new Set(body.eventIds)]

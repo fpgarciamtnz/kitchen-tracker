@@ -1,37 +1,39 @@
 import { createError } from 'h3'
 import type { RequestLogger } from 'evlog'
-import { eq } from 'drizzle-orm'
 import type { CleaningEvent, CleaningState } from '../../shared/cleaning'
 import { cleaningTasks, createEmptyCleaningState, mergeCleaningState } from '../../shared/cleaning'
-import { cleaningState } from '../db/schema'
 
-const STATE_ID = 'default'
+const STATE_KEY = 'cleaning:state'
 
-function databaseError(cause: unknown, operation: string, log: RequestLogger): never {
-  const message = cause instanceof Error ? cause.message : ''
-  const reason = /no such table/i.test(message) ? 'missing_table' : /binding|DB is not defined/i.test(message) ? 'missing_binding' : 'query_failed'
-  log.set({ database: { operation, reason } })
-  // Drizzle errors may contain query parameters, including the stored names.
-  throw createError({ statusCode: 500, statusMessage: 'Cleaning database request failed' })
+type CleaningKV = { get(key: string, type: 'text'): Promise<string | null>; put(key: string, value: string): Promise<void> }
+
+function getKV(log: RequestLogger): CleaningKV {
+  const kv = (globalThis as typeof globalThis & { CLEANING_KV?: CleaningKV }).CLEANING_KV
+  if (!kv) {
+    log.set({ storage: { operation: 'binding_missing', kind: 'kv' } })
+    throw createError({ statusCode: 500, statusMessage: 'Cleaning storage is not configured' })
+  }
+  return kv
+}
+
+function storageError(cause: unknown, operation: string, log: RequestLogger): never {
+  log.set({ storage: { operation, kind: 'kv', reason: 'request_failed' } })
+  throw createError({ statusCode: 500, statusMessage: 'Cleaning storage request failed' })
 }
 
 async function readState(log: RequestLogger): Promise<CleaningState> {
-  let row
+  const kv = getKV(log)
   try {
-    row = await db.select().from(cleaningState).where(eq(cleaningState.id, STATE_ID)).get()
-  } catch (cause) { databaseError(cause, 'read', log) }
-  if (!row) return createEmptyCleaningState()
-  try { return mergeCleaningState(JSON.parse(row.payload)) } catch {
-    log.set({ database: { operation: 'read', reason: 'invalid_state' } })
-    throw createError({ statusCode: 500, statusMessage: 'Stored cleaning data could not be read' })
-  }
+    const payload = await kv.get(STATE_KEY, 'text')
+    return payload ? mergeCleaningState(JSON.parse(payload)) : createEmptyCleaningState()
+  } catch (cause) { storageError(cause, 'read', log) }
 }
 
 async function writeState(state: CleaningState, log: RequestLogger) {
-  const payload = JSON.stringify(state)
+  const kv = getKV(log)
   try {
-    await db.insert(cleaningState).values({ id: STATE_ID, payload, updatedAt: Date.now() }).onConflictDoUpdate({ target: cleaningState.id, set: { payload, updatedAt: Date.now() } })
-  } catch (cause) { databaseError(cause, 'write', log) }
+    await kv.put(STATE_KEY, JSON.stringify(state))
+  } catch (cause) { storageError(cause, 'write', log) }
 }
 
 export async function getCleaningState(log: RequestLogger) { return readState(log) }
@@ -43,7 +45,7 @@ export async function completeCleaningTasks(taskIds: string[], by: string, log: 
   for (const taskId of taskIds) {
     if (!state.items[taskId]) continue
     const event: CleaningEvent = { id: crypto.randomUUID(), timestamp, by }
-    state.items[taskId].history.push(event)
+    state.items[taskId].history = [...state.items[taskId].history, event].slice(-2)
     const type = cleaningTasks.find(task => task.id === taskId)?.type
     if (!type) continue
     state.queue[type] = [...state.queue[type].filter(id => id !== taskId), taskId]

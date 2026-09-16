@@ -23,16 +23,19 @@ export default defineNuxtConfig({
   css: ['~/assets/css/tailwind.css'],
   components: [{ path: '~/components', extensions: ['vue'] }],
   tailwindcss: { cssPath: '~/assets/css/tailwind.css' },
-  app: { head: { htmlAttrs: { lang: 'en' }, title: 'Kitchen Tracker', meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }, { name: 'theme-color', content: '#f7f5f0' }] } },
+  app: { head: {
+    htmlAttrs: { lang: 'en' },
+    title: 'Kitchen Tracker',
+    meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }, { name: 'theme-color', content: '#f7f5f0' }],
+    link: [
+      { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+      { rel: 'apple-touch-icon', href: '/kitchen-tracker-icon.png' }
+    ]
+  } },
   routeRules: {
     '/semanal': { redirect: '/weekly' },
     '/profunda': { redirect: '/deep' },
     '/perfil': { redirect: '/profile' }
-  },
-  hub: {
-    db: process.env.NODE_ENV === 'production'
-      ? { dialect: 'sqlite', driver: 'd1', connection: { databaseId: process.env.NUXT_HUB_CLOUDFLARE_DATABASE_ID } }
-      : { dialect: 'sqlite', driver: 'libsql', connection: { url: 'file:.data/db/sqlite.db' } }
   },
   nitro: {
     preset: 'cloudflare_module',

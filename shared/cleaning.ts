@@ -12,15 +12,18 @@ export type CleaningTaskView = CleaningTask & { history: CleaningEvent[]; lastCl
 
 export const cleaningTasks: CleaningTask[] = [
   { id: 'inside-fridges', type: 'weekly', order: 1 },
-  { id: 'plastic-boxes', type: 'weekly', order: 2 },
-  { id: 'oven-area', type: 'weekly', order: 3 },
-  { id: 'storage', type: 'weekly', order: 4 },
-  { id: 'under-sink', type: 'weekly', order: 5 },
+  { id: 'oven-area', type: 'weekly', order: 1 },
+  { id: 'storage', type: 'weekly', order: 2 },
+  { id: 'under-sink', type: 'weekly', order: 3 },
+  { id: 'inside-hot-section', type: 'weekly', order: 4 },
+  { id: 'plastic-boxes', type: 'weekly', order: 5 },
+  { id: 'plates-shelf', type: 'weekly', order: 6 },
   { id: 'inside-extraction-bell', type: 'deep', order: 1 },
   { id: 'behind-fridges', type: 'deep', order: 2 },
   { id: 'inside-oven', type: 'deep', order: 3 },
   { id: 'induction-stoves', type: 'deep', order: 4 },
-  { id: 'dishwasher', type: 'deep', order: 5 }
+  { id: 'outside-extraction-hood', type: 'deep', order: 5 },
+  { id: 'dishwasher', type: 'deep', order: 6 }
 ]
 
 export function createEmptyCleaningState(): CleaningState {
@@ -38,7 +41,7 @@ export function mergeCleaningState(raw?: Partial<CleaningState> | null): Cleanin
   const empty = createEmptyCleaningState()
   if (!raw?.items) return empty
   for (const task of cleaningTasks) {
-    empty.items[task.id] = { history: [...(raw.items[task.id]?.history || [])].sort((a, b) => a.timestamp.localeCompare(b.timestamp)) }
+    empty.items[task.id] = { history: [...(raw.items[task.id]?.history || [])].sort((a, b) => a.timestamp.localeCompare(b.timestamp)).slice(-2) }
   }
 
   const suppliedQueue = raw.queue || empty.queue

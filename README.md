@@ -33,7 +33,7 @@ La compilación usa el preset `cloudflare_module` y el driver D1 de NuxtHub en p
 
 En Workers Builds, usa `pnpm run build` como comando de compilación y `pnpm run deploy` como comando de despliegue. El nombre `kitchen-tracker` se configura en `nitro.cloudflare.wrangler.name` dentro de `nuxt.config.ts`. Nitro genera `.output/server/wrangler.json` con el punto de entrada y los assets, y `.wrangler/deploy/config.json` dirige Wrangler a esa configuración. Estos archivos se generan durante la compilación y no se deben guardar en Git.
 
-La lista inicial está en [`shared/cleaning.ts`](./shared/cleaning.ts). El estado persistido se guarda como un único documento JSON en la tabla `cleaning_state`; cada tarea mantiene su historial de eventos `{ id, timestamp, by }`.
+La lista inicial está en [`shared/cleaning.ts`](./shared/cleaning.ts). El estado persistido se guarda como un único documento JSON en Cloudflare KV; cada tarea conserva solo sus dos eventos más recientes `{ id, timestamp, by }`.
 
 ## Idioma
 
@@ -49,8 +49,10 @@ No se registran PIN, cookies, nombres, cuerpos completos ni parámetros SQL. Los
 
 En Cloudflare, abre el Worker `kitchen-tracker` y su sección **Observability → Logs**. Filtra por `requestId`, `action`, `source` o `level`. `wrangler.toml` activa Logs, desactiva los logs rutinarios de invocación y conserva el 10% de las trazas. Los eventos que evlog decide conservar no se vuelven a muestrear en Workers Logs.
 
-D1 está configurado mediante el binding `DB` en `wrangler.toml`. Para aplicar futuras migraciones después de compilar:
+Cloudflare KV usa el binding `CLEANING_KV` en `wrangler.toml`. Crea un namespace, copia su identificador en ese archivo y despliega:
 
 ```bash
-pnpm exec wrangler d1 migrations apply DB --remote --config .output/server/wrangler.json
+pnpm exec wrangler kv namespace create kitchen-tracker-cleaning
+pnpm run build
+pnpm run deploy
 ```
