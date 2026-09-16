@@ -19,11 +19,13 @@ onMounted(async () => {
 })
 onBeforeUnmount(() => cleaning.clearSelection())
 
-function formatRelative(value?: string) {
+function formatDate(value?: string) {
   if (!value) return ''
-  const days = Math.floor((Date.now() - new Date(value).getTime()) / 86_400_000)
-  if (days <= 0) return t('cleaning.today')
-  return t('cleaning.daysAgo', days)
+  return new Intl.DateTimeFormat(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric'
+  }).format(new Date(value))
 }
 
 async function complete() {
@@ -45,7 +47,10 @@ async function undo() {
     <header class="mb-8">
       <p class="text-xs font-semibold uppercase tracking-[0.2em] text-accent">{{ t('app.kitchen') }} · {{ type === 'weekly' ? '01' : '02' }}</p>
       <h1 class="mt-3 text-4xl font-semibold tracking-tight">{{ title }}</h1>
-      <p class="mt-4 max-w-md text-sm leading-6 text-stone-600">{{ eyebrow }}</p>
+      <div class="mt-5 max-w-md rounded-xl bg-accent-soft/50 px-4 py-3">
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{{ t('cleaning.howItWorks') }}</p>
+        <p class="mt-1 text-sm leading-6 text-stone-700">{{ eyebrow }}</p>
+      </div>
     </header>
 
     <div v-if="error" class="mb-4 flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
@@ -54,17 +59,15 @@ async function undo() {
     </div>
 
     <section aria-live="polite">
-      <TransitionGroup name="cleaning-list" tag="div" class="relative space-y-3">
-        <article v-for="task in tasks" :key="task.id" class="task-card" :class="isSelected(task.id) && 'task-card-selected'">
-          <label class="flex cursor-pointer gap-4 p-5">
-            <input type="checkbox" :checked="isSelected(task.id)" :aria-label="t('cleaning.select', { task: t(`tasks.${task.id}.title`) })" class="task-checkbox mt-1" @change="cleaning.toggle(task.id)" />
+      <TransitionGroup name="cleaning-list" tag="div" class="relative overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-[0_8px_24px_rgba(37,28,22,0.04)]">
+        <article v-for="(task, index) in tasks" :key="task.id" class="task-row" :class="[isSelected(task.id) && 'task-row-selected', index < tasks.length - 1 && 'border-b border-stone-100']">
+          <label class="flex cursor-pointer gap-4 px-4 py-4 sm:px-5">
+            <input type="checkbox" :checked="isSelected(task.id)" :aria-label="t('cleaning.select', { task: t(`tasks.${task.id}.title`) })" class="task-checkbox mt-0.5" @change="cleaning.toggle(task.id)" />
             <span class="min-w-0 flex-1">
-              <span class="flex flex-wrap items-start justify-between gap-3">
-                <span class="text-lg font-semibold leading-tight text-ink">{{ t(`tasks.${task.id}.title`) }}</span>
-                <span v-if="task.lastCleanedAt" class="shrink-0 rounded-full bg-stone-100 px-2.5 py-1 text-xs font-medium text-stone-500">{{ formatRelative(task.lastCleanedAt) }}</span>
+              <span class="block text-base font-semibold leading-tight text-ink">{{ t(`tasks.${task.id}.title`) }}</span>
+              <span v-if="task.lastCleanedAt" class="mt-1.5 block text-xs text-stone-500">
+                {{ t('cleaning.lastCleaned', { name: task.lastCleanedBy || t('cleaning.unknownPerson'), date: formatDate(task.lastCleanedAt) }) }}
               </span>
-              <span class="mt-2 block text-sm leading-6 text-stone-600">{{ t(`tasks.${task.id}.description`) }}</span>
-              <span v-if="task.lastCleanedBy" class="mt-3 block text-xs font-medium text-stone-400">{{ t('cleaning.lastBy', { name: task.lastCleanedBy }) }}</span>
             </span>
           </label>
         </article>
@@ -94,9 +97,9 @@ async function undo() {
 <style scoped>
 .task-checkbox { @apply h-5 w-5 shrink-0 cursor-pointer appearance-none rounded-md border-2 border-stone-300 bg-white transition checked:border-accent checked:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent; }
 .task-checkbox:checked { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m3 8 3 3 7-7' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-position: center; background-repeat: no-repeat; }
-.task-card { @apply overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-[0_8px_24px_rgba(37,28,22,0.04)] transition; }
-.task-card:hover { @apply -translate-y-0.5 shadow-card; }
-.task-card-selected { @apply border-accent bg-accent-soft/40; }
+.task-row { @apply transition-colors; }
+.task-row:hover { @apply bg-stone-50; }
+.task-row-selected { @apply bg-accent-soft/40; }
 .cleaning-list-enter-active, .cleaning-list-leave-active { transition: all .35s ease; }
 .cleaning-list-enter-from, .cleaning-list-leave-to { opacity: 0; transform: translateY(-12px) scale(.98); }
 .cleaning-list-leave-active { position: absolute; width: 100%; }
