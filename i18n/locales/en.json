@@ -5,8 +5,8 @@
   },
   "nav": {
     "label": "Main navigation",
-    "weekly": "Weekly",
-    "deep": "Deep clean",
+    "createPrep": "Create prep",
+    "cleaning": "Cleaning",
     "profile": "Profile",
     "prep": "Prep list"
   },
@@ -39,11 +39,12 @@
     "saveError": "Your name couldn't be saved. Please try again."
   },
   "cleaning": {
+    "title": "Cleaning tracker",
+    "description": "Select the tasks you have finished, then tap Complete tasks to record them.",
     "weeklyTitle": "Weekly cleaning",
-    "weeklyDescription": "Tap the first task in the list when you complete it. It is the current priority.",
+    "weeklyDescription": "Weekly tasks, with the next priority first.",
     "deepTitle": "Deep cleaning",
-    "deepDescription": "Tap the first task in the list when you complete it. It is the current priority.",
-    "howItWorks": "How it works",
+    "deepDescription": "Deep cleaning tasks, with the next priority first.",
     "select": "Mark {task} as done",
     "lastCleaned": "Last cleaned by {name} · {date}",
     "unknownPerson": "Unknown",
@@ -110,12 +111,13 @@
   },
   "prep": {
     "title": "Prep list",
-    "view": "View list",
+    "view": "View prep list",
     "create": "Create prep list",
+    "createHelp": "Add items to the menu, then select what the next shift needs. Your selections appear in the prep list.",
     "newList": "New prep list",
     "choose": "Choose the prep",
     "editList": "Edit current list",
-    "editMenu": "Edit menu",
+    "editMenu": "Manage prep items",
     "print": "Print",
     "download": "Download receipt PDF",
     "printError": "The receipt could not be created. Try again.",

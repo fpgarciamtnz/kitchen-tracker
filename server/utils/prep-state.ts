@@ -30,7 +30,17 @@ function failure(cause: unknown, log: RequestLogger): never {
     })
   if (cause instanceof PrepInputError)
     throw createError({ statusCode: 400, statusMessage: cause.message })
-  log.set({ database: { operation: 'prep', reason: 'request_failed' } })
+  // Drizzle wraps the database error. Inspect causes, but never log SQL or stored content.
+  let reason = 'request_failed'
+  let error = cause
+  for (let depth = 0; depth < 5 && error instanceof Error; depth++) {
+    if (/no such table:\s*prep_state/i.test(error.message)) {
+      reason = 'missing_table'
+      break
+    }
+    error = error.cause
+  }
+  log.set({ database: { operation: 'prep', reason } })
   throw createError({
     statusCode: 503,
     statusMessage: 'Prep storage request failed',

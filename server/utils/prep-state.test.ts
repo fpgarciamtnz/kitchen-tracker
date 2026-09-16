@@ -26,6 +26,26 @@ async function database() {
 }
 
 describe('prep SQL storage', () => {
+  it('identifies a missing migration and loads prep after applying it without changing cleaning data', async () => {
+    const client = createClient({ url: ':memory:' })
+    clients.push(client)
+    vi.stubGlobal('db', drizzle(client))
+    await client.execute(readFileSync(new URL('../db/migrations/sqlite/0000_create_cleaning_state.sql', import.meta.url), 'utf8'))
+    await client.execute({ sql: 'INSERT INTO cleaning_state VALUES (?, ?, ?)', args: ['default', '{"existing":"cleaning history"}', 1] })
+    const before = await client.execute('SELECT * FROM cleaning_state')
+    const log = createLogger({})
+    await expect(readPrep(log)).rejects.toMatchObject({ statusCode: 503 })
+    expect(log.getContext()).toMatchObject({ database: { operation: 'prep', reason: 'missing_table' } })
+
+    const migration = readFileSync(new URL('../db/migrations/sqlite/0001_create_prep_state.sql', import.meta.url), 'utf8')
+    await client.execute(migration)
+    expect(await readPrep(log)).toMatchObject({ revision: 0, current: null })
+    const saved = await updatePrep({ revision: 0, command: { type: 'start', date: '2026-09-17' } }, log)
+    await client.execute(migration)
+    expect(await readPrep(log)).toEqual(saved)
+    expect((await client.execute('SELECT * FROM cleaning_state')).rows).toEqual(before.rows)
+  })
+
   it('persists across readers and rejects a stale writer', async () => {
     await database()
     const log = createLogger({})

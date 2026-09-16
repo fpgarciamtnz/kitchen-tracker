@@ -7,7 +7,7 @@ const { t } = useI18n()
 const route = useRoute()
 const prep = usePrep()
 await prep.refresh()
-const active = ref(route.query.edit === '1')
+const active = computed(() => route.query.edit === '1')
 const open = ref('')
 const notesDirty = ref(false)
 const current = computed(() => prep.state.value?.current)
@@ -19,7 +19,6 @@ onMounted(() => {
 })
 async function start() {
   if (await prep.send({ type: 'start', date: date.value })) {
-    active.value = true
     await navigateTo('/prep/create?edit=1', { replace: true })
   }
 }
@@ -52,8 +51,12 @@ function all(group: PrepGroup) {
       >
       <p class="prep-eyebrow">{{ t('prep.title') }}</p>
       <h1 class="prep-title mt-2">
-        {{ active && current ? t('prep.choose') : t('prep.newList') }}
+        {{ t('prep.create') }}
       </h1>
+      <p class="mt-3 text-sm leading-6 text-stone-600">{{ t('prep.createHelp') }}</p>
+      <NuxtLink v-if="prep.state.value" to="/prep/menu" class="prep-secondary mt-4">
+        <Settings2 :size="16" aria-hidden="true" />{{ t('prep.editMenu') }}
+      </NuxtLink>
     </header>
     <PrepStatus />
     <template v-if="prep.state.value">
@@ -94,11 +97,7 @@ function all(group: PrepGroup) {
           <p class="text-sm text-stone-500">
             {{ t('prep.selected', { count: current.selected.length }) }}
           </p>
-          <NuxtLink to="/prep/menu" class="prep-secondary"
-            ><Settings2 :size="16" aria-hidden="true" />{{
-              t('prep.editMenu')
-            }}</NuxtLink
-          >
+          <NuxtLink to="/prep/create" class="text-sm font-medium text-accent underline">{{ t('prep.newList') }}</NuxtLink>
         </div>
         <div class="space-y-3">
           <section
