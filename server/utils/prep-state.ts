@@ -10,10 +10,23 @@ import {
 import type { PrepRequest, PrepState } from '../../shared/prep'
 import { prepState } from '../db/prep-schema'
 
+function upgradeLegacyMenu(state: PrepState): PrepState {
+  // Before the hosted menu was copied, the initial catalog was the single
+  // empty Generics group. Keep any current handoff intact while replacing
+  // that untouched catalog with the new defaults.
+  const legacy =
+    state.menu.length === 1 &&
+    state.menu[0]?.id === 'generic' &&
+    state.menu[0].name === 'Generics' &&
+    state.menu[0].items.length === 0
+  if (!legacy) return state
+  return { ...state, menu: emptyPrepState().menu }
+}
+
 async function load() {
   const row = await db.select().from(prepState).where(eq(prepState.id, 1)).get()
   if (!row) return { exists: false, state: emptyPrepState() }
-  const state: PrepState = JSON.parse(row.document)
+  const state = upgradeLegacyMenu(JSON.parse(row.document) as PrepState)
   if (
     !Array.isArray(state.menu) ||
     !('current' in state) ||

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { createClient, type Client } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { createLogger } from 'evlog'
+import { emptyPrepState } from '../../shared/prep'
 import { readPrep, updatePrep } from './prep-state'
 const clients: Client[] = []
 afterEach(() => {
@@ -26,6 +27,50 @@ async function database() {
 }
 
 describe('prep SQL storage', () => {
+  it('upgrades the old empty Generics catalog while preserving the current handoff', async () => {
+    const client = await database()
+    const log = createLogger({})
+    const legacyCurrent = {
+      id: 'legacy-list',
+      date: '2026-09-16',
+      groups: [
+        {
+          id: 'generic',
+          name: 'Generics',
+          items: [
+            { id: 'legacy-item', name: 'Keep this task', ingredients: ['Keep this product'] },
+          ],
+        },
+      ],
+      selected: ['legacy-item'],
+      completed: [],
+      notes: 'Keep this note',
+      manualOrder: ['Keep this product'],
+    }
+    await client.execute({
+      sql: 'INSERT INTO prep_state VALUES (1, 7, ?)',
+      args: [
+        JSON.stringify({
+          revision: 7,
+          menu: [{ id: 'generic', name: 'Generics', items: [] }],
+          current: legacyCurrent,
+        }),
+      ],
+    })
+
+    const state = await readPrep(log)
+    expect(state.revision).toBe(7)
+    expect(state.menu).toEqual(emptyPrepState().menu)
+    expect(state.current).toEqual(legacyCurrent)
+
+    const saved = await updatePrep(
+      { revision: 7, command: { type: 'start', date: '2026-09-17' } },
+      log,
+    )
+    expect(saved.menu).toEqual(emptyPrepState().menu)
+    expect((await readPrep(log)).menu).toEqual(emptyPrepState().menu)
+  })
+
   it('identifies a missing migration and loads prep after applying it without changing cleaning data', async () => {
     const client = createClient({ url: ':memory:' })
     clients.push(client)
