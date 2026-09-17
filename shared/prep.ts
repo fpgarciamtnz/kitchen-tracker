@@ -36,10 +36,215 @@ export interface PrepRequest {
 export class PrepInputError extends Error {}
 export class PrepConflictError extends Error {}
 
+const DEFAULT_PREP_MENU: PrepGroup[] = [
+  {
+    id: 'snaks',
+    name: 'Snaks',
+    items: [
+      { id: 'snaks-olives', name: 'Olives', ingredients: [] },
+      {
+        id: 'snaks-butter-for-bread',
+        name: 'Butter for bread',
+        ingredients: [],
+      },
+      {
+        id: 'snaks-compote-for-cheese',
+        name: 'Compote for cheese',
+        ingredients: [],
+      },
+      { id: 'snaks-charcuteria', name: 'Charcutería', ingredients: [] },
+    ],
+  },
+  {
+    id: 'ceasar-salad',
+    name: 'Ceasar salad',
+    items: [
+      {
+        id: 'ceasar-salad-slice-romane-salad',
+        name: 'Slice Romane Salad',
+        ingredients: [],
+      },
+      {
+        id: 'ceasar-salad-caesar-dressing',
+        name: 'Caesar dressing',
+        ingredients: [],
+      },
+      { id: 'ceasar-salad-crutons', name: 'Crutons', ingredients: [] },
+    ],
+  },
+  {
+    id: 'vitelo-tonnato',
+    name: 'Vitelo tonnato',
+    items: [
+      {
+        id: 'vitelo-tonnato-slice-vitelo',
+        name: 'Slice vitelo',
+        ingredients: [],
+      },
+      {
+        id: 'vitelo-tonnato-tuna-mayo',
+        name: 'Tuna Mayo',
+        ingredients: [],
+      },
+      { id: 'vitelo-tonnato-chives', name: 'Chives', ingredients: [] },
+      { id: 'vitelo-tonnato-veal-jus', name: 'Veal jus', ingredients: [] },
+      {
+        id: 'vitelo-tonnato-make-vitelo',
+        name: 'Make Vitelo',
+        ingredients: [],
+      },
+    ],
+  },
+  {
+    id: 'ragu',
+    name: 'Ragú',
+    items: [
+      { id: 'ragu-ragu', name: 'Ragu', ingredients: [] },
+      { id: 'ragu-parmesan', name: 'Parmesan', ingredients: [] },
+      { id: 'ragu-butter-cubes', name: 'Butter cubes', ingredients: [] },
+      { id: 'ragu-spinach-pack', name: 'Spinach pack', ingredients: [] },
+    ],
+  },
+  {
+    id: 'stracciaela',
+    name: 'Stracciaela',
+    items: [
+      { id: 'stracciaela-item', name: 'Stracciaela', ingredients: [] },
+      { id: 'stracciaela-herbs', name: 'Herbs', ingredients: [] },
+      { id: 'stracciaela-zucchini', name: 'Zucchini', ingredients: [] },
+    ],
+  },
+  {
+    id: 'chanterelle-pasta',
+    name: 'Chanterelle pasta',
+    items: [
+      {
+        id: 'chanterelle-pasta-clean-mushrooms',
+        name: 'Clean mushrooms',
+        ingredients: [],
+      },
+      {
+        id: 'chanterelle-pasta-miso-mushrooms-stock',
+        name: 'Miso mushrooms stock',
+        ingredients: [],
+      },
+      {
+        id: 'chanterelle-pasta-parley',
+        name: 'Parley',
+        ingredients: [],
+      },
+      {
+        id: 'chanterelle-pasta-cut-onion-for-pasta',
+        name: 'Cut onion for pasta',
+        ingredients: [],
+      },
+    ],
+  },
+  {
+    id: 'cheesecake',
+    name: 'Cheesecake',
+    items: [
+      { id: 'cheesecake-cheese-cake', name: 'Cheese cake', ingredients: [] },
+      {
+        id: 'cheesecake-blueberries-compot',
+        name: 'Blueberries compot',
+        ingredients: [],
+      },
+      {
+        id: 'cheesecake-almond-crumble',
+        name: 'Almond crumble',
+        ingredients: [],
+      },
+    ],
+  },
+  {
+    id: 'tomato-salad',
+    name: 'Tomato salad',
+    items: [
+      { id: 'tomato-salad-tomatoes', name: 'Tomatoes', ingredients: [] },
+      { id: 'tomato-salad-pesto', name: 'Pesto', ingredients: [] },
+      {
+        id: 'tomato-salad-roasted-pinenuts',
+        name: 'Roasted Pinenuts',
+        ingredients: [],
+      },
+      {
+        id: 'tomato-salad-olives-capers-mix',
+        name: 'Olives capers mix',
+        ingredients: [],
+      },
+    ],
+  },
+  {
+    id: 'oeuf-mayo',
+    name: 'Oeuf Mayo',
+    items: [
+      { id: 'oeuf-mayo-boil-eggs', name: 'Boil eggs', ingredients: [] },
+      { id: 'oeuf-mayo-safran-mayo', name: 'Safran mayo', ingredients: [] },
+      {
+        id: 'oeuf-mayo-yellow-caviar',
+        name: 'Yellow caviar',
+        ingredients: [],
+      },
+      {
+        id: 'oeuf-mayo-pickled-carrots',
+        name: 'Pickled Carrots',
+        ingredients: [],
+      },
+    ],
+  },
+  {
+    id: 'beef-tartare',
+    name: 'Beef tartare',
+    items: [
+      {
+        id: 'beef-tartare-cut-meet',
+        name: 'Cut beef tartare meet',
+        ingredients: [],
+      },
+      {
+        id: 'beef-tartare-chopped-capers',
+        name: 'Chopped capers',
+        ingredients: [],
+      },
+      {
+        id: 'beef-tartare-dice-onion',
+        name: 'Dice onion for tartar',
+        ingredients: [],
+      },
+      {
+        id: 'beef-tartare-parley-terragon',
+        name: 'Parley and terragon for tartar',
+        ingredients: [],
+      },
+      {
+        id: 'beef-tartare-pickled-mustard-seeds',
+        name: 'Pickled mustard seeds',
+        ingredients: [],
+      },
+      {
+        id: 'beef-tartare-chips',
+        name: 'Chips for tartar',
+        ingredients: [],
+      },
+      {
+        id: 'beef-tartare-egg-yolk',
+        name: 'Egg yolk for tartar',
+        ingredients: [],
+      },
+      {
+        id: 'beef-tartare-pack-salad',
+        name: 'Pack salad',
+        ingredients: [],
+      },
+    ],
+  },
+]
+
 export function emptyPrepState(): PrepState {
   return {
     revision: 0,
-    menu: [{ id: 'generic', name: 'Generics', items: [] }],
+    menu: structuredClone(DEFAULT_PREP_MENU),
     current: null,
   }
 }

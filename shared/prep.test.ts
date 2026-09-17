@@ -50,6 +50,77 @@ function selected(): PrepState {
   })
 }
 
+describe('default prep menu', () => {
+  it('copies the hosted Prep List dishes and items without extra item data', () => {
+    const dishes = emptyPrepState().menu.map((group) => ({
+      name: group.name,
+      items: group.items.map((item) => item.name),
+    }))
+    expect(dishes).toEqual([
+      {
+        name: 'Snaks',
+        items: ['Olives', 'Butter for bread', 'Compote for cheese', 'Charcutería'],
+      },
+      {
+        name: 'Ceasar salad',
+        items: ['Slice Romane Salad', 'Caesar dressing', 'Crutons'],
+      },
+      {
+        name: 'Vitelo tonnato',
+        items: ['Slice vitelo', 'Tuna Mayo', 'Chives', 'Veal jus', 'Make Vitelo'],
+      },
+      {
+        name: 'Ragú',
+        items: ['Ragu', 'Parmesan', 'Butter cubes', 'Spinach pack'],
+      },
+      {
+        name: 'Stracciaela',
+        items: ['Stracciaela', 'Herbs', 'Zucchini'],
+      },
+      {
+        name: 'Chanterelle pasta',
+        items: [
+          'Clean mushrooms',
+          'Miso mushrooms stock',
+          'Parley',
+          'Cut onion for pasta',
+        ],
+      },
+      {
+        name: 'Cheesecake',
+        items: ['Cheese cake', 'Blueberries compot', 'Almond crumble'],
+      },
+      {
+        name: 'Tomato salad',
+        items: ['Tomatoes', 'Pesto', 'Roasted Pinenuts', 'Olives capers mix'],
+      },
+      {
+        name: 'Oeuf Mayo',
+        items: ['Boil eggs', 'Safran mayo', 'Yellow caviar', 'Pickled Carrots'],
+      },
+      {
+        name: 'Beef tartare',
+        items: [
+          'Cut beef tartare meet',
+          'Chopped capers',
+          'Dice onion for tartar',
+          'Parley and terragon for tartar',
+          'Pickled mustard seeds',
+          'Chips for tartar',
+          'Egg yolk for tartar',
+          'Pack salad',
+        ],
+      },
+    ])
+    expect(emptyPrepState().menu.flatMap((group) => group.items)).toHaveLength(42)
+    expect(
+      emptyPrepState().menu.every((group) =>
+        group.items.every((item) => item.ingredients.length === 0),
+      ),
+    ).toBe(true)
+  })
+})
+
 describe('daily kitchen handoff', () => {
   it('replaces the entire current list, including unfinished tasks, notes and manual orders', () => {
     let state = selected()

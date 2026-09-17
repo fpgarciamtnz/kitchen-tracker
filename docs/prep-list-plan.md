@@ -25,7 +25,7 @@ Wittgenstein decision: extend the existing Nuxt pages, i18n, auth and database p
 
 Descartes audit selected by the user: a KV document cannot support rapid same-key writes or atomic concurrent edits. D1 uses a revision-checked SQL update; stale clients receive a conflict and must reload. No silent last-write-wins behavior. Catalog and selected work are distinct so menu deletion cannot erase the handoff.
 
-Implementation choices: preserve the app's English; group duplicate linked ingredient names case-insensitively while retaining sources; start with an empty Generics group rather than invented menu data. Existing selected work retains its names and ingredient links. New lists use the latest menu.
+Implementation choices: preserve the app's English; group duplicate linked ingredient names case-insensitively while retaining sources; seed new storage with the dishes and items copied from the hosted Prep List, without its checked state, icons or ingredient links. Existing selected work retains its names and ingredient links. New lists use the latest menu.
 
 Unverified external condition: physical Star printer delivery and device app availability. The PDF, wrapping, transport URL and callback can be verified locally; the kitchen phone must exercise the physical printer.
 
