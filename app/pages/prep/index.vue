@@ -47,7 +47,7 @@ async function complete(id: string, event: Event) {
           :title="t('prep.title')"
           :date="current.date"
           :lines="prepReceipt(current)"
-          :disabled="prep.blocked.value"
+          :disabled="prep.loading.value || prep.conflict.value"
         />
       </div>
     </header>
@@ -81,7 +81,7 @@ async function complete(id: string, event: Event) {
                 type="checkbox"
                 class="prep-checkbox"
                 :checked="current.completed.includes(item.id)"
-                :disabled="prep.blocked.value"
+                :disabled="prep.selectionBlocked.value"
                 @change="complete(item.id, $event)"
               />
               <span

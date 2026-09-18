@@ -91,7 +91,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm(t('prep.unsaved')))
         :title="t('prep.order')"
         :date="list.date"
         :lines="orderReceipt(list)"
-        :disabled="dirty || prep.blocked.value"
+        :disabled="dirty || prep.loading.value || prep.conflict.value"
       />
     </div>
   </section>

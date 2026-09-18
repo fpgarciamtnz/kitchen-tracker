@@ -143,7 +143,7 @@ function all(group: PrepGroup) {
                       current!.selected.includes(item.id),
                     )
                   "
-                  :disabled="!group.items.length || prep.blocked.value"
+                  :disabled="!group.items.length || prep.selectionBlocked.value"
                   :aria-label="t('prep.selectAll', { name: group.name })"
                   @change="
                     select(
@@ -171,7 +171,7 @@ function all(group: PrepGroup) {
                   type="checkbox"
                   class="prep-checkbox mt-0.5"
                   :checked="current.selected.includes(item.id)"
-                  :disabled="prep.blocked.value"
+                  :disabled="prep.selectionBlocked.value"
                   @change="
                     select(
                       [item.id],
@@ -231,7 +231,7 @@ function all(group: PrepGroup) {
             :title="t('prep.title')"
             :date="current.date"
             :lines="prepReceipt(current)"
-            :disabled="notesDirty || prep.blocked.value"
+            :disabled="notesDirty || prep.loading.value || prep.conflict.value"
           />
         </div>
         <PrepOrder :key="current.id" :list="current" />
