@@ -122,7 +122,7 @@ describe('default prep menu', () => {
 })
 
 describe('daily kitchen handoff', () => {
-  it('replaces the entire current list, including unfinished tasks, notes and manual orders', () => {
+  it('keeps the current list while preparing a new draft', () => {
     let state = selected()
     state = applyPrepCommand(state, {
       type: 'notes',
@@ -135,21 +135,30 @@ describe('daily kitchen handoff', () => {
       items: ['Bin bags'],
     })
     const next = applyPrepCommand(state, { type: 'start', date: '2026-09-18' })
-    expect(next.current).toMatchObject({
+    expect(next.draft).toMatchObject({
       selected: [],
       completed: [],
       notes: '',
       manualOrder: [],
     })
-    expect(next.current?.id).not.toBe(state.current?.id)
+    expect(next.draft?.id).not.toBe(state.current?.id)
+    expect(next.current?.id).toBe(state.current?.id)
+    const oldItem = next.current!.selected[0]!
+    const oldUpdated = applyPrepCommand(next, {
+      type: 'complete', listId: next.current!.id, id: oldItem, completed: true,
+    })
+    expect(oldUpdated.current?.completed).toContain(oldItem)
     expect(next.menu).toEqual(menu)
-    expect(() =>
-      applyPrepCommand(next, {
+    const oldNote = applyPrepCommand(next, {
         type: 'notes',
         listId: state.current!.id,
         text: 'Stale note',
-      }),
-    ).toThrow()
+      })
+    expect(oldNote.current?.notes).toBe('Stale note')
+    expect(oldNote.draft?.notes).toBe('')
+    const finalized = applyPrepCommand(next, { type: 'finalize', listId: next.draft!.id })
+    expect(finalized.current?.id).toBe(next.draft?.id)
+    expect(finalized.draft).toBeNull()
   })
   it('keeps catalog order, omits empty dishes and reverses completion without changing print content', () => {
     let state = selected()
@@ -208,7 +217,7 @@ describe('daily kitchen handoff', () => {
     expect(prepReceipt(state.current!)).toEqual(before)
     expect(orderSuggestions(state.current!)).toHaveLength(3)
     const next = applyPrepCommand(state, { type: 'start', date: '2026-09-18' })
-    expect(next.current?.groups).toEqual([])
+    expect(next.draft?.groups).toEqual([])
   })
   it('adds newly configured items to the creator without selecting them', () => {
     const state = applyPrepCommand(selected(), {

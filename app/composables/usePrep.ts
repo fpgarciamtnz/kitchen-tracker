@@ -1,4 +1,5 @@
 import { log } from 'evlog/client'
+import { toRaw } from 'vue'
 import { applyPrepCommand } from '#shared/prep'
 import type { PrepState, PrepCommand } from '#shared/prep'
 import { getFailureContext } from '#shared/observability'
@@ -22,7 +23,7 @@ export function usePrep() {
     loading.value = true
     try {
       state.value = await request<PrepState>('/api/prep')
-      persisted.value = structuredClone(state.value)
+      persisted.value = structuredClone(toRaw(state.value))
       error.value = ''
       conflict.value = false
     } catch (cause) {
@@ -51,14 +52,14 @@ export function usePrep() {
           // Keep all commands visible while later requests are in flight.
           state.value = queue.value.reduce(
             (current, item) => applyPrepCommand(current, item.command),
-            structuredClone(next),
+            structuredClone(toRaw(next)),
           )
         } catch (cause) {
           const context = getFailureContext(cause)
           conflict.value = context.status === 409
           error.value = t(conflict.value ? 'prep.conflict' : 'prep.saveError')
           log.error({ action: 'prep_save_failed', ...context })
-          state.value = structuredClone(persisted.value)
+          state.value = structuredClone(toRaw(persisted.value))
           for (const item of queue.value.splice(0)) item.resolve(false)
         }
       }
@@ -69,7 +70,7 @@ export function usePrep() {
   }
   function send(command: PrepCommand): Promise<boolean> {
     if (!state.value || conflict.value) return Promise.resolve(false)
-    if (!persisted.value) persisted.value = structuredClone(state.value)
+    if (!persisted.value) persisted.value = structuredClone(toRaw(state.value))
     try {
       state.value = applyPrepCommand(state.value, command)
     } catch {

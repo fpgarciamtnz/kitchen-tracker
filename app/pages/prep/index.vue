@@ -29,7 +29,7 @@ async function complete(id: string, event: Event) {
     <header class="mb-7">
       <p class="prep-eyebrow">{{ t('app.kitchen') }}</p>
       <div class="mt-2 flex items-center justify-between gap-3">
-        <h1 class="prep-title">{{ t('prep.title') }}</h1>
+        <div class="flex items-center gap-3"><h1 class="prep-title">{{ t('prep.title') }}</h1><NuxtLink to="/recipes" class="prep-secondary min-h-9">Recipes</NuxtLink></div>
         <NuxtLink
           v-if="current"
           to="/prep/create?edit=1"

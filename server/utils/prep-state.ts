@@ -26,7 +26,10 @@ function upgradeLegacyMenu(state: PrepState): PrepState {
 async function load() {
   const row = await db.select().from(prepState).where(eq(prepState.id, 1)).get()
   if (!row) return { exists: false, state: emptyPrepState() }
-  const state = upgradeLegacyMenu(JSON.parse(row.document) as PrepState)
+  const state = upgradeLegacyMenu(JSON.parse(row.document) as PrepState) as PrepState & { draft?: PrepState['draft'] }
+  // States written before concurrent prep lists existed have no draft field.
+  const legacyState = state as PrepState & { draft?: PrepState['draft'] }
+  if (legacyState.draft === undefined) legacyState.draft = null
   if (
     !Array.isArray(state.menu) ||
     !('current' in state) ||

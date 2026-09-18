@@ -21,9 +21,12 @@ export interface PrepState {
   revision: number
   menu: PrepGroup[]
   current: PrepList | null
+  /** List being prepared next. It is promoted to current only on finalize. */
+  draft: PrepList | null
 }
 export type PrepCommand =
   | { type: 'start'; date: string }
+  | { type: 'finalize'; listId: string }
   | { type: 'select'; listId: string; ids: string[]; selected: boolean }
   | { type: 'complete'; listId: string; id: string; completed: boolean }
   | { type: 'notes'; listId: string; text: string }
@@ -246,6 +249,7 @@ export function emptyPrepState(): PrepState {
     revision: 0,
     menu: structuredClone(DEFAULT_PREP_MENU),
     current: null,
+    draft: null,
   }
 }
 
@@ -321,6 +325,9 @@ export function parsePrepRequest(value: unknown): PrepRequest {
     case 'menu':
       command = { type: 'menu', groups: parseMenu(raw.groups) }
       break
+    case 'finalize':
+      command = { type: 'finalize', listId: text(raw.listId, 100) }
+      break
     case 'select':
       command = {
         type: 'select',
@@ -393,7 +400,7 @@ export function applyPrepCommand(
 ): PrepState {
   const state = structuredClone(input)
   if (command.type === 'start') {
-    state.current = {
+    const list: PrepList = {
       id: crypto.randomUUID(),
       date: command.date,
       groups: structuredClone(state.menu),
@@ -402,12 +409,24 @@ export function applyPrepCommand(
       notes: '',
       manualOrder: [],
     }
+    // The first prep list is immediately the visible current list. Once a
+    // prep list exists, subsequent starts stay as a draft until finalized.
+    if (state.current) state.draft = list
+    else state.current = list
+  } else if (command.type === 'finalize') {
+    if (!state.draft || state.draft.id !== command.listId)
+      throw new PrepConflictError('The draft list has changed')
+    state.current = state.draft
+    state.draft = null
   } else if (command.type === 'menu') {
     state.menu = structuredClone(command.groups)
     if (state.current)
       state.current.groups = syncCatalog(state.current, state.menu)
+    if (state.draft) state.draft.groups = syncCatalog(state.draft, state.menu)
   } else {
-    const list = state.current
+    const list =
+      (state.draft?.id === command.listId ? state.draft : null) ??
+      (state.current?.id === command.listId ? state.current : null)
     if (!list || list.id !== command.listId)
       throw new PrepConflictError('The current list has changed')
     if (command.type === 'select') {

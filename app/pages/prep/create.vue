@@ -10,17 +10,20 @@ await prep.refresh()
 const active = computed(() => route.query.edit === '1')
 const open = ref('')
 const notesDirty = ref(false)
-const current = computed(() => prep.state.value?.current)
+const current = computed(() => prep.state.value?.draft)
 const date = ref('')
 onMounted(() => {
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  date.value = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`
+  const today = new Date()
+  date.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 })
 async function start() {
   if (await prep.send({ type: 'start', date: date.value })) {
     await navigateTo('/prep/create?edit=1', { replace: true })
   }
+}
+async function finalize() {
+  if (current.value && await prep.send({ type: 'finalize', listId: current.value.id }))
+    await navigateTo('/prep', { replace: true })
 }
 async function select(ids: string[], selected: boolean, event?: Event) {
   if (!current.value) return
@@ -99,6 +102,7 @@ function all(group: PrepGroup) {
           </p>
           <NuxtLink to="/prep/create" class="text-sm font-medium text-accent underline">{{ t('prep.newList') }}</NuxtLink>
         </div>
+        <button class="prep-primary mb-5 w-full" :disabled="prep.blocked.value" @click="finalize">{{ t('prep.finalize') }}</button>
         <div class="space-y-3">
           <section
             v-for="group in current.groups"
