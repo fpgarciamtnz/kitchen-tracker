@@ -17,7 +17,10 @@ async function save() {
   if (
     await prep.send({ type: 'notes', listId: props.list.id, text: draft.value })
   )
-    draft.value = prep.state.value!.current!.notes
+    draft.value =
+      (prep.state.value?.draft?.id === props.list.id
+        ? prep.state.value.draft.notes
+        : prep.state.value?.current?.notes) || ''
 }
 onBeforeRouteLeave(() => !dirty.value || window.confirm(t('prep.unsaved')))
 </script>

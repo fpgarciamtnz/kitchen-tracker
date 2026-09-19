@@ -19,7 +19,11 @@ function addGroup() {
   saved.value = false
 }
 function addItem(group: PrepGroup) {
-  group.items.push({ id: crypto.randomUUID(), name: '', ingredients: [] })
+  const item = { id: crypto.randomUUID(), name: '', ingredients: [] }
+  group.items.push(item)
+  // A new line must be visible immediately. Collapsed groups made the old
+  // action look like it had done nothing.
+  open.value = group.id
   saved.value = false
 }
 function move<T>(items: T[], index: number, delta: number) {

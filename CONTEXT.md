@@ -68,6 +68,6 @@ One free-text entry in an Ingredients or Steps section. Pressing Enter saves the
 A printed recipe must include every ingredient line, every step, and all entered text. Long text wraps and continues onto additional paper or pages rather than being shortened, replaced with an ellipsis, or silently omitted. Recipe attachments remain digital visual clues and are not printed.
 
 **Prep list**:
-A separate operational tool for shift work. Recipes have no current relationship to prep lists.
+A separate operational tool for shift work. Recipes have no current relationship to prep lists. This is the canonical project term and is always written as two words. In user input, `preplist`, `preplis`, `prepli`, `playlist`, and obvious spelling variants mean **prep list** when the context is this kitchen tool. The project keeps `prep list` in user-facing language and `prep` in established technical names such as `/prep`, `usePrep`, and `prep_state`. `Playlist` keeps its ordinary meaning only in a clearly musical context.
 
 _Avoid_: Treating a recipe as a prep task, linking recipe changes to prep lists, making one person a required editor, forcing polished prose, truncating recipe text in the editor or printout, or treating recipe media as decoration rather than kitchen context.

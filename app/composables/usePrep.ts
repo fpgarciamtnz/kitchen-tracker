@@ -61,6 +61,10 @@ export function usePrep() {
           log.error({ action: 'prep_save_failed', ...context })
           state.value = structuredClone(toRaw(persisted.value))
           for (const item of queue.value.splice(0)) item.resolve(false)
+          // A failed writer must be recoverable from the screen. The reload
+          // action can fetch the newer revision, while leaving the controls
+          // usable instead of trapping the session in a permanent conflict.
+          conflict.value = false
         }
       }
     } finally {

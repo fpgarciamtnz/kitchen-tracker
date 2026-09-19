@@ -10,17 +10,23 @@ await prep.refresh()
 const active = computed(() => route.query.edit === '1')
 const open = ref('')
 const notesDirty = ref(false)
+const starting = ref(false)
 const current = computed(() =>
   prep.state.value ? editablePrepList(prep.state.value) : null,
 )
-const date = ref('')
-onMounted(() => {
-  const today = new Date()
-  date.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-})
+const today = new Date()
+const date = ref(
+  `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`,
+)
 async function start() {
-  if (await prep.send({ type: 'start', date: date.value })) {
-    await navigateTo('/prep/create?edit=1', { replace: true })
+  if (starting.value || !date.value) return
+  starting.value = true
+  try {
+    if (await prep.send({ type: 'start', date: date.value })) {
+      await navigateTo('/prep/create?edit=1', { replace: true })
+    }
+  } finally {
+    starting.value = false
   }
 }
 async function finalize() {
@@ -86,9 +92,9 @@ function all(group: PrepGroup) {
         />
         <button
           class="prep-primary mt-6 w-full"
-          :disabled="!date || prep.blocked.value"
+          :disabled="!date || prep.blocked.value || starting"
         >
-          {{ current ? t('prep.replace') : t('prep.start') }}
+          {{ starting ? t('common.saving') : current ? t('prep.replace') : t('prep.start') }}
         </button>
         <NuxtLink
           v-if="current"
@@ -104,7 +110,7 @@ function all(group: PrepGroup) {
           </p>
           <NuxtLink to="/prep/create" class="text-sm font-medium text-accent underline">{{ t('prep.newList') }}</NuxtLink>
         </div>
-        <button class="prep-primary mb-5 w-full" :disabled="prep.blocked.value" @click="finalize">{{ t('prep.finalize') }}</button>
+        <button type="button" class="prep-primary mb-5 w-full" :disabled="prep.blocked.value" @click="finalize">{{ t('prep.finalize') }}</button>
         <div class="space-y-3">
           <section
             v-for="group in current.groups"
