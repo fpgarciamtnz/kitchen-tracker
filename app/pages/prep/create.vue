@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ChevronDown, ArrowLeft, Settings2 } from '@lucide/vue'
-import { prepReceipt } from '#shared/prep'
+import { editablePrepList, prepReceipt } from '#shared/prep'
 import type { PrepGroup } from '#shared/prep'
 definePageMeta({ layout: 'cleaning' })
 const { t } = useI18n()
@@ -10,7 +10,9 @@ await prep.refresh()
 const active = computed(() => route.query.edit === '1')
 const open = ref('')
 const notesDirty = ref(false)
-const current = computed(() => prep.state.value?.draft)
+const current = computed(() =>
+  prep.state.value ? editablePrepList(prep.state.value) : null,
+)
 const date = ref('')
 onMounted(() => {
   const today = new Date()

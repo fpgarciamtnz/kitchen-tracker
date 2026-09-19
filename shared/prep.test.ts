@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   applyPrepCommand,
+  editablePrepList,
   emptyPrepState,
   orderReceipt,
   orderSuggestions,
@@ -122,6 +123,12 @@ describe('default prep menu', () => {
 })
 
 describe('daily kitchen handoff', () => {
+  it('keeps the first list editable after starting it', () => {
+    const state = start()
+    expect(state.draft).toBeNull()
+    expect(editablePrepList(state)?.id).toBe(state.current?.id)
+  })
+
   it('keeps the current list while preparing a new draft', () => {
     let state = selected()
     state = applyPrepCommand(state, {

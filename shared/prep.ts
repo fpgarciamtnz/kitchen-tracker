@@ -24,6 +24,11 @@ export interface PrepState {
   /** List being prepared next. It is promoted to current only on finalize. */
   draft: PrepList | null
 }
+
+/** List shown in the create/edit screen, preferring an in-progress draft. */
+export function editablePrepList(state: PrepState): PrepList | null {
+  return state.draft ?? state.current
+}
 export type PrepCommand =
   | { type: 'start'; date: string }
   | { type: 'finalize'; listId: string }
