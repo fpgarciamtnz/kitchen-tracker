@@ -1,53 +1,44 @@
 <script setup lang="ts">
-import { ChevronDown, ArrowLeft, Settings2 } from '@lucide/vue'
-import { editablePrepList, prepReceipt } from '#shared/prep'
-import type { PrepGroup } from '#shared/prep'
+import { ArrowLeft, Settings2 } from '@lucide/vue'
+import { prepReceipt } from '#shared/prep'
+import { localDate } from '#shared/prep-history'
 definePageMeta({ layout: 'cleaning' })
 const { t } = useI18n()
 const route = useRoute()
 const prep = usePrep()
 await prep.refresh()
-const active = computed(() => route.query.edit === '1')
-const open = ref('')
+// Older links used ?edit=1 to change the published list.
+if (route.query.edit === '1' && !prep.state.value?.draft && prep.state.value?.current)
+  await navigateTo('/prep/edit', { replace: true })
+const draft = computed(() => prep.state.value?.draft)
+const current = computed(() => prep.state.value?.current)
 const notesDirty = ref(false)
-const starting = ref(false)
-const current = computed(() =>
-  prep.state.value ? editablePrepList(prep.state.value) : null,
-)
-const today = new Date()
-const date = ref(
-  `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`,
-)
-async function start() {
-  if (starting.value || !date.value) return
-  starting.value = true
+const busy = ref(false)
+const date = ref(localDate())
+async function run(action: () => Promise<unknown>) {
+  if (busy.value) return
+  busy.value = true
   try {
-    if (await prep.send({ type: 'start', date: date.value })) {
-      await navigateTo('/prep/create?edit=1', { replace: true })
-    }
+    await action()
   } finally {
-    starting.value = false
+    busy.value = false
   }
 }
-async function finalize() {
-  if (current.value && await prep.send({ type: 'finalize', listId: current.value.id }))
-    await navigateTo('/prep', { replace: true })
-}
-async function select(ids: string[], selected: boolean, event?: Event) {
-  if (!current.value) return
-  const saved = await prep.send({
-    type: 'select',
-    listId: current.value.id,
-    ids,
-    selected,
-  })
-  if (!saved && event) (event.target as HTMLInputElement).checked = !selected
-}
-function all(group: PrepGroup) {
-  return (
-    group.items.length > 0 &&
-    group.items.every((item) => current.value?.selected.includes(item.id))
+function start() {
+  return run(() =>
+    prep.send({ type: 'start', date: date.value, listId: crypto.randomUUID() }),
   )
+}
+function finalize() {
+  return run(async () => {
+    if (draft.value && (await prep.send({ type: 'finalize', listId: draft.value.id })))
+      await navigateTo('/prep', { replace: true })
+  })
+}
+function discard() {
+  const list = draft.value
+  if (!list || !window.confirm(t('prep.discardConfirm'))) return
+  return run(() => prep.send({ type: 'discard', listId: list.id }))
 }
 </script>
 <template>
@@ -64,18 +55,16 @@ function all(group: PrepGroup) {
       <h1 class="prep-title mt-2">
         {{ t('prep.create') }}
       </h1>
-      <p class="mt-3 text-sm leading-6 text-stone-600">{{ t('prep.createHelp') }}</p>
+      <p v-if="draft" class="mt-3 text-sm leading-6 text-stone-600">
+        {{ t(current ? 'prep.draftHelp' : 'prep.firstDraftHelp', { date: draft.date }) }}
+      </p>
       <NuxtLink v-if="prep.state.value" to="/prep/menu" class="prep-secondary mt-4">
         <Settings2 :size="16" aria-hidden="true" />{{ t('prep.editMenu') }}
       </NuxtLink>
     </header>
     <PrepStatus />
     <template v-if="prep.state.value">
-      <form
-        v-if="!active || !current"
-        class="prep-card p-6"
-        @submit.prevent="start"
-      >
+      <form v-if="!draft" class="prep-card p-6" @submit.prevent="start">
         <h2 class="text-lg font-semibold">{{ t('prep.freshTitle') }}</h2>
         <p class="mt-3 text-sm leading-6 text-stone-600">
           {{ current ? t('prep.replaceHelp') : t('prep.startHelp') }}
@@ -92,9 +81,9 @@ function all(group: PrepGroup) {
         />
         <button
           class="prep-primary mt-6 w-full"
-          :disabled="!date || prep.blocked.value || starting"
+          :disabled="!date || prep.blocked.value || busy"
         >
-          {{ starting ? t('common.saving') : current ? t('prep.replace') : t('prep.start') }}
+          {{ busy ? t('common.saving') : t('prep.start') }}
         </button>
         <NuxtLink
           v-if="current"
@@ -104,149 +93,37 @@ function all(group: PrepGroup) {
         >
       </form>
       <template v-else>
-        <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <p class="text-sm text-stone-500">
-            {{ t('prep.selected', { count: current.selected.length }) }}
-          </p>
-          <NuxtLink to="/prep/create" class="text-sm font-medium text-accent underline">{{ t('prep.newList') }}</NuxtLink>
-        </div>
-        <button type="button" class="prep-primary mb-5 w-full" :disabled="prep.blocked.value" @click="finalize">{{ t('prep.finalize') }}</button>
-        <div class="space-y-3">
-          <section
-            v-for="group in current.groups"
-            :key="group.id"
-            class="prep-card"
-            :class="
-              open === group.id && 'border-accent/40 ring-1 ring-accent/10'
-            "
-          >
-            <div class="flex items-center gap-2 px-3">
-              <button
-                class="flex min-h-16 min-w-0 flex-1 items-center gap-3 py-3 text-left"
-                :aria-expanded="open === group.id"
-                :aria-controls="`group-${group.id}`"
-                @click="open = open === group.id ? '' : group.id"
-              >
-                <ChevronDown
-                  :size="18"
-                  class="shrink-0 text-stone-400"
-                  :class="open === group.id && 'rotate-180'"
-                  aria-hidden="true"
-                /><span class="min-w-0 flex-1 break-words font-semibold">{{
-                  group.name
-                }}</span
-                ><span class="text-xs tabular-nums text-stone-400"
-                  >{{
-                    group.items.filter((item) =>
-                      current!.selected.includes(item.id),
-                    ).length
-                  }}/{{ group.items.length }}</span
-                >
-              </button>
-              <label
-                class="flex min-h-12 cursor-pointer items-center gap-2 px-2 text-xs text-stone-500"
-                ><input
-                  type="checkbox"
-                  class="prep-checkbox"
-                  :checked="all(group)"
-                  :indeterminate="
-                    !all(group) &&
-                    group.items.some((item) =>
-                      current!.selected.includes(item.id),
-                    )
-                  "
-                  :disabled="!group.items.length || prep.selectionBlocked.value"
-                  :aria-label="t('prep.selectAll', { name: group.name })"
-                  @change="
-                    select(
-                      group.items.map((item) => item.id),
-                      ($event.target as HTMLInputElement).checked,
-                      $event,
-                    )
-                  "
-                /><span>{{ t('prep.all') }}</span></label
-              >
-            </div>
-            <div
-              v-if="open === group.id"
-              :id="`group-${group.id}`"
-              class="border-t border-stone-100"
-            >
-              <label
-                v-for="item in group.items"
-                :key="item.id"
-                class="flex min-h-16 cursor-pointer items-start gap-4 border-b border-stone-100 px-4 py-4 last:border-0"
-                :class="
-                  current.selected.includes(item.id) && 'bg-accent-soft/40'
-                "
-                ><input
-                  type="checkbox"
-                  class="prep-checkbox mt-0.5"
-                  :checked="current.selected.includes(item.id)"
-                  :disabled="prep.selectionBlocked.value"
-                  @change="
-                    select(
-                      [item.id],
-                      ($event.target as HTMLInputElement).checked,
-                      $event,
-                    )
-                  "
-                /><span class="min-w-0"
-                  ><span class="block break-words font-medium">{{
-                    item.name
-                  }}</span
-                  ><span
-                    v-if="item.ingredients.length"
-                    class="mt-1 block break-words text-xs leading-5 text-stone-500"
-                    >{{ t('prep.linked') }}
-                    {{ item.ingredients.join(' · ') }}</span
-                  ></span
-                ></label
-              >
-              <p
-                v-if="!group.items.length"
-                class="px-4 py-5 text-sm text-stone-500"
-              >
-                {{ t('prep.noItems') }}
-                <NuxtLink
-                  to="/prep/menu"
-                  class="font-medium text-accent underline"
-                  >{{ t('prep.editMenu') }}</NuxtLink
-                >
-              </p>
-            </div>
-            <p
-              v-else-if="
-                group.items.some((item) => current!.selected.includes(item.id))
-              "
-              class="border-t border-stone-100 px-4 py-3 text-xs leading-5 text-stone-500 break-words"
-            >
-              {{
-                group.items
-                  .filter((item) => current!.selected.includes(item.id))
-                  .map((item) => item.name)
-                  .join(' · ')
-              }}
-            </p>
-          </section>
-        </div>
-        <PrepNotes
-          :key="current.id"
-          :list="current"
-          @dirty="notesDirty = $event"
+        <p class="mb-5 text-sm text-stone-500">
+          {{ t('prep.selected', { count: draft.selected.length }) }}
+        </p>
+        <PrepEditor :list="draft" />
+        <PrepNotes :key="draft.id" :list="draft" @dirty="notesDirty = $event" />
+        <PrepOrder :list="draft" />
+        <PrepPrint
+          class="mt-6"
+          :title="t('prep.title')"
+          :date="draft.date"
+          :lines="prepReceipt(draft)"
+          :disabled="notesDirty || prep.loading.value || prep.conflict.value"
         />
-        <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-          <NuxtLink to="/prep" class="prep-primary">{{
-            t('prep.view')
-          }}</NuxtLink
-          ><PrepPrint
-            :title="t('prep.title')"
-            :date="current.date"
-            :lines="prepReceipt(current)"
-            :disabled="notesDirty || prep.loading.value || prep.conflict.value"
-          />
+        <div class="sticky bottom-28 mt-6 rounded-xl bg-paper/95 py-3 backdrop-blur">
+          <button
+            type="button"
+            class="prep-primary w-full"
+            :disabled="prep.blocked.value || busy"
+            @click="finalize"
+          >
+            {{ t('prep.finalize') }}
+          </button>
         </div>
-        <PrepOrder :key="current.id" :list="current" />
+        <button
+          type="button"
+          class="flex min-h-11 w-full items-center justify-center text-sm text-stone-500 disabled:opacity-40"
+          :disabled="prep.blocked.value || busy"
+          @click="discard"
+        >
+          {{ t('prep.discard') }}
+        </button>
       </template>
     </template>
   </main>

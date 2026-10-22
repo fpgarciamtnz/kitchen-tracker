@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Printer, Download } from '@lucide/vue'
+import { Printer, Download, Share2 } from '@lucide/vue'
+import { receiptText } from '#shared/prep'
 import type { ReceiptLine } from '#shared/prep'
 const props = defineProps<{
   title: string
@@ -11,6 +12,7 @@ const { t } = useI18n()
 const busy = ref(false)
 const error = ref('')
 const offeredHelp = ref(false)
+const copied = ref(false)
 async function print(download = false) {
   if (busy.value || props.disabled || !props.lines.length) return
   busy.value = true
@@ -32,6 +34,22 @@ async function print(download = false) {
     busy.value = false
   }
 }
+// Plain text for WhatsApp or any other app. Without a share sheet, copy it instead.
+async function share() {
+  if (props.disabled || !props.lines.length) return
+  error.value = ''
+  const text = receiptText(props.title, props.date, props.lines)
+  try {
+    if (navigator.share) await navigator.share({ text })
+    else {
+      await navigator.clipboard.writeText(text)
+      copied.value = true
+      window.setTimeout(() => (copied.value = false), 3000)
+    }
+  } catch (cause) {
+    if ((cause as Error).name !== 'AbortError') error.value = t('prep.shareError')
+  }
+}
 </script>
 <template>
   <div>
@@ -44,6 +62,13 @@ async function print(download = false) {
         <Printer :size="17" aria-hidden="true" />{{ t('prep.print') }}
       </button>
       <button
+        class="prep-secondary"
+        :disabled="disabled || !lines.length"
+        @click="share"
+      >
+        <Share2 :size="17" aria-hidden="true" />{{ t('prep.share') }}
+      </button>
+      <button
         class="prep-icon"
         :disabled="disabled || busy || !lines.length"
         :aria-label="t('prep.download')"
@@ -53,6 +78,9 @@ async function print(download = false) {
         <Download :size="17" aria-hidden="true" />
       </button>
     </div>
+    <p v-if="copied" role="status" class="mt-2 text-sm text-emerald-700">
+      {{ t('prep.copied') }}
+    </p>
     <p v-if="error" role="alert" class="mt-2 text-sm text-red-700">
       {{ error }}
     </p>

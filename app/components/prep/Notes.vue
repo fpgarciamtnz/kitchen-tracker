@@ -5,22 +5,36 @@ const emit = defineEmits<{ dirty: [value: boolean] }>()
 const { t } = useI18n()
 const prep = usePrep()
 const draft = ref(props.list.notes)
+// Saved notes the draft started from. Saving over newer notes takes a choice.
+const base = ref(props.list.notes)
 const dirty = computed(() => draft.value !== props.list.notes)
+const changedElsewhere = computed(
+  () => props.list.notes !== base.value && props.list.notes !== draft.value,
+)
 watch(dirty, (value) => emit('dirty', value), { immediate: true })
 watch(
   () => props.list.notes,
-  (next, previous) => {
-    if (draft.value === previous) draft.value = next
+  (next) => {
+    if (draft.value === base.value) draft.value = base.value = next
   },
 )
+function useTheirs() {
+  draft.value = base.value = props.list.notes
+}
+function keepMine() {
+  base.value = props.list.notes
+}
 async function save() {
+  const text = (draft.value = draft.value.trim())
   if (
-    await prep.send({ type: 'notes', listId: props.list.id, text: draft.value })
+    await prep.send({
+      type: 'notes',
+      listId: props.list.id,
+      text,
+      base: base.value,
+    })
   )
-    draft.value =
-      (prep.state.value?.draft?.id === props.list.id
-        ? prep.state.value.draft.notes
-        : prep.state.value?.current?.notes) || ''
+    base.value = text
 }
 onBeforeRouteLeave(() => !dirty.value || window.confirm(t('prep.unsaved')))
 </script>
@@ -41,6 +55,24 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm(t('prep.unsaved')))
       aria-describedby="notes-help"
       :placeholder="t('prep.notesPlaceholder')"
     />
+    <div
+      v-if="changedElsewhere"
+      class="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm"
+      role="status"
+    >
+      <p class="font-semibold">{{ t('prep.notesChanged') }}</p>
+      <p class="mt-2 whitespace-pre-wrap break-words text-stone-600">
+        {{ list.notes }}
+      </p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button type="button" class="prep-secondary" @click="useTheirs">
+          {{ t('prep.useTheirs') }}
+        </button>
+        <button type="button" class="prep-secondary" @click="keepMine">
+          {{ t('prep.keepMine') }}
+        </button>
+      </div>
+    </div>
     <button
       class="prep-secondary mt-2"
       :disabled="!dirty || prep.blocked.value"

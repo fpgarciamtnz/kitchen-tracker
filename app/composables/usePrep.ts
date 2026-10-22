@@ -13,8 +13,8 @@ export function usePrep() {
   const conflict = useState('prep-conflict', () => false)
   const persisted = useState<PrepState | null>('prep-persisted', () => null)
   type Pending = { command: PrepCommand; resolve: (saved: boolean) => void }
-  // The queue is shared by every component using this composable. A single
-  // revision stream prevents rapid checkbox changes from racing each other.
+  // The queue is shared by every component using this composable. Sending one
+  // command at a time keeps rapid checkbox changes in the order they were made.
   const queue = useState<Pending[]>('prep-command-queue', () => [])
   const processing = useState('prep-processing', () => false)
   const request = useRequestFetch()

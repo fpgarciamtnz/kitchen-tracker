@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Plus, Pencil } from '@lucide/vue'
+import { ArrowRight, Plus, Pencil } from '@lucide/vue'
 import { selectedGroups, prepReceipt } from '#shared/prep'
 definePageMeta({ layout: 'cleaning' })
 const { t } = useI18n()
 const prep = usePrep()
 await prep.refresh()
 const current = computed(() => prep.state.value?.current)
+const draft = computed(() => prep.state.value?.draft)
 const groups = computed(() =>
   current.value ? selectedGroups(current.value) : [],
 )
@@ -32,7 +33,7 @@ async function complete(id: string, event: Event) {
         <div class="flex items-center gap-3"><h1 class="prep-title">{{ t('prep.title') }}</h1><NuxtLink to="/recipes" class="prep-secondary min-h-9">Recipes</NuxtLink></div>
         <NuxtLink
           v-if="current"
-          to="/prep/create?edit=1"
+          to="/prep/edit"
           class="prep-icon"
           :aria-label="t('prep.editList')"
           ><Pencil :size="19" aria-hidden="true"
@@ -53,12 +54,27 @@ async function complete(id: string, event: Event) {
     </header>
     <PrepStatus />
     <template v-if="prep.state.value">
+      <NuxtLink
+        v-if="draft"
+        to="/prep/create"
+        class="mb-6 flex items-center gap-4 rounded-2xl border border-accent/30 bg-accent-soft/40 px-4 py-4"
+      >
+        <span class="min-w-0 flex-1">
+          <span class="block font-semibold">{{ t('prep.draftTitle', { date: draft.date }) }}</span>
+          <span class="mt-1 block text-sm text-stone-600">{{
+            t('prep.selected', { count: draft.selected.length })
+          }}</span>
+        </span>
+        <span class="inline-flex items-center gap-1 text-sm font-semibold text-accent"
+          >{{ t('prep.continue') }}<ArrowRight :size="16" aria-hidden="true"
+        /></span>
+      </NuxtLink>
       <section v-if="!current" class="prep-card p-7 text-center">
         <h2 class="text-lg font-semibold">{{ t('prep.emptyTitle') }}</h2>
         <p class="mt-2 text-sm leading-6 text-stone-500">
           {{ t('prep.emptyHelp') }}
         </p>
-        <NuxtLink to="/prep/create" class="prep-primary mt-5"
+        <NuxtLink v-if="!draft" to="/prep/create" class="prep-primary mt-5"
           ><Plus :size="18" aria-hidden="true" />{{
             t('prep.create')
           }}</NuxtLink
@@ -109,12 +125,12 @@ async function complete(id: string, event: Event) {
             {{ current.notes }}
           </p>
         </section>
-        <NuxtLink to="/prep/create" class="prep-secondary mt-6"
+        <PrepOrder v-if="!draft" :list="current" />
+        <NuxtLink v-if="!draft" to="/prep/create" class="prep-secondary mt-6"
           ><Plus :size="17" aria-hidden="true" />{{
             t('prep.newList')
           }}</NuxtLink
         >
-        <PrepOrder :key="current.id" :list="current" />
       </template>
     </template>
   </main>

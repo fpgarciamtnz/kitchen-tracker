@@ -43,7 +43,8 @@ async function reloadMenu() {
   }
 }
 async function save() {
-  if (await prep.send({ type: 'menu', groups: groups.value })) {
+  const base = JSON.parse(baseline.value) as PrepGroup[]
+  if (await prep.send({ type: 'menu', groups: groups.value, base })) {
     groups.value = JSON.parse(JSON.stringify(prep.state.value!.menu))
     baseline.value = JSON.stringify(groups.value)
     saved.value = true
@@ -56,7 +57,7 @@ onBeforeRouteLeave(() => !dirty.value || window.confirm(t('prep.unsaved')))
   <main class="prep-page">
     <header class="mb-6">
       <NuxtLink
-        to="/prep/create?edit=1"
+        to="/prep/create"
         class="mb-5 inline-flex min-h-10 items-center gap-2 text-sm text-stone-500"
         ><ArrowLeft :size="17" aria-hidden="true" />{{
           t('prep.backCreate')

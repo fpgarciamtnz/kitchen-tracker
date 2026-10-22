@@ -1,12 +1,19 @@
 export interface PrepItem {
   id: string
   name: string
+  /** Products this item needs. They go on the order list while it is selected. */
   ingredients: string[]
 }
 export interface PrepGroup {
   id: string
   name: string
   items: PrepItem[]
+}
+/** Products ordered independently of any prep item, such as oil or salt. */
+export interface ProductGroup {
+  id: string
+  name: string
+  products: string[]
 }
 export interface PrepList {
   id: string
@@ -15,28 +22,38 @@ export interface PrepList {
   selected: string[]
   completed: string[]
   notes: string
-  manualOrder: string[]
+  /** Products ordered beyond the selected prep: catalog products or typed names. */
+  orderAdded: string[]
+  /** Keys of linked products taken off the order. */
+  orderRemoved: string[]
 }
 export interface PrepState {
   revision: number
   menu: PrepGroup[]
+  products: ProductGroup[]
+  /** Published list the kitchen works from. */
   current: PrepList | null
-  /** List being prepared next. It is promoted to current only on finalize. */
+  /** Next list being prepared. It replaces current only on finalize. */
   draft: PrepList | null
 }
 
-/** List shown in the create/edit screen, preferring an in-progress draft. */
-export function editablePrepList(state: PrepState): PrepList | null {
+/** Newest list: the one being prepared, otherwise the published one. Its order is the one to place. */
+export function workingPrepList(state: PrepState): PrepList | null {
   return state.draft ?? state.current
 }
+// Whole-value edits carry the value they started from. Other commands apply
+// to whatever the latest state is, so two phones rarely conflict.
 export type PrepCommand =
-  | { type: 'start'; date: string }
+  // The phone picks the new list's ID so ticks made before the server answers refer to it.
+  | { type: 'start'; date: string; listId: string }
   | { type: 'finalize'; listId: string }
+  | { type: 'discard'; listId: string }
   | { type: 'select'; listId: string; ids: string[]; selected: boolean }
   | { type: 'complete'; listId: string; id: string; completed: boolean }
-  | { type: 'notes'; listId: string; text: string }
-  | { type: 'order'; listId: string; items: string[] }
-  | { type: 'menu'; groups: PrepGroup[] }
+  | { type: 'notes'; listId: string; text: string; base: string }
+  | { type: 'order'; listId: string; names: string[]; ordered: boolean }
+  | { type: 'menu'; groups: PrepGroup[]; base: PrepGroup[] }
+  | { type: 'products'; groups: ProductGroup[]; base: ProductGroup[] }
 export interface PrepRequest {
   revision: number
   command: PrepCommand
@@ -249,12 +266,47 @@ const DEFAULT_PREP_MENU: PrepGroup[] = [
   },
 ]
 
+const DEFAULT_PRODUCTS: ProductGroup[] = [
+  { id: 'basics', name: 'Basics', products: [] },
+]
+
 export function emptyPrepState(): PrepState {
   return {
     revision: 0,
     menu: structuredClone(DEFAULT_PREP_MENU),
+    products: structuredClone(DEFAULT_PRODUCTS),
     current: null,
     draft: null,
+  }
+}
+
+type StoredPrepList = Omit<PrepList, 'orderAdded' | 'orderRemoved'> &
+  Partial<Pick<PrepList, 'orderAdded' | 'orderRemoved'>> & {
+    manualOrder?: string[]
+  }
+export type StoredPrepState = Omit<PrepState, 'products' | 'current' | 'draft'> & {
+  products?: ProductGroup[]
+  current: StoredPrepList | null
+  draft?: StoredPrepList | null
+}
+function normalizeList(list: StoredPrepList | null | undefined): PrepList | null {
+  if (!list) return null
+  // Older lists kept typed order products in manualOrder.
+  const { manualOrder, ...rest } = list
+  return {
+    ...rest,
+    orderAdded: list.orderAdded ?? manualOrder ?? [],
+    orderRemoved: list.orderRemoved ?? [],
+  }
+}
+/** Fills fields added after a state was stored, keeping its lists and order products. */
+export function normalizePrepState(state: StoredPrepState): PrepState {
+  return {
+    revision: state.revision,
+    menu: state.menu,
+    products: state.products ?? structuredClone(DEFAULT_PRODUCTS),
+    current: normalizeList(state.current),
+    draft: normalizeList(state.draft),
   }
 }
 
@@ -309,6 +361,18 @@ export function parseMenu(value: unknown): PrepGroup[] {
     }
   })
 }
+export function parseProducts(value: unknown): ProductGroup[] {
+  if (!Array.isArray(value) || value.length > 100)
+    throw new PrepInputError('Invalid products')
+  const ids = new Set<string>()
+  return value.map((raw) => {
+    const group = record(raw)
+    const id = text(group.id, 100)
+    if (ids.has(id)) throw new PrepInputError('Duplicate ID')
+    ids.add(id)
+    return { id, name: text(group.name), products: strings(group.products) }
+  })
+}
 export function parsePrepRequest(value: unknown): PrepRequest {
   const body = record(value)
   if (!Number.isSafeInteger(body.revision) || Number(body.revision) < 0)
@@ -324,14 +388,26 @@ export function parsePrepRequest(value: unknown): PrepRequest {
         new Date(date).toISOString().slice(0, 10) !== date
       )
         throw new PrepInputError('Invalid date')
-      command = { type: 'start', date }
+      command = { type: 'start', date, listId: text(raw.listId, 100) }
       break
     }
     case 'menu':
-      command = { type: 'menu', groups: parseMenu(raw.groups) }
+      command = {
+        type: 'menu',
+        groups: parseMenu(raw.groups),
+        base: parseMenu(raw.base),
+      }
+      break
+    case 'products':
+      command = {
+        type: 'products',
+        groups: parseProducts(raw.groups),
+        base: parseProducts(raw.base),
+      }
       break
     case 'finalize':
-      command = { type: 'finalize', listId: text(raw.listId, 100) }
+    case 'discard':
+      command = { type: raw.type, listId: text(raw.listId, 100) }
       break
     case 'select':
       command = {
@@ -354,15 +430,20 @@ export function parsePrepRequest(value: unknown): PrepRequest {
         type: 'notes',
         listId: text(raw.listId, 100),
         text: text(raw.text, 10000, true),
+        base: text(raw.base, 10000, true),
       }
       break
-    case 'order':
+    case 'order': {
+      const names = strings(raw.names)
+      if (!names.length) throw new PrepInputError('Invalid list')
       command = {
         type: 'order',
         listId: text(raw.listId, 100),
-        items: strings(raw.items, 500),
+        names,
+        ordered: flag(raw.ordered),
       }
       break
+    }
     default:
       throw new PrepInputError('Invalid action')
   }
@@ -399,47 +480,63 @@ function syncCatalog(current: PrepList, menu: PrepGroup[]): PrepGroup[] {
   return groups
 }
 
+function sameValue(a: unknown, b: unknown) {
+  return JSON.stringify(a) === JSON.stringify(b)
+}
+// State and commands are plain JSON. Copying them as JSON also accepts the
+// reactive proxies a screen holds, which structuredClone rejects.
+function copy<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
 export function applyPrepCommand(
   input: PrepState,
   command: PrepCommand,
 ): PrepState {
-  const state = structuredClone(input)
+  const state = copy(input)
   if (command.type === 'start') {
-    const list: PrepList = {
-      id: crypto.randomUUID(),
+    // Starting again must not wipe a list someone else is already preparing.
+    if (state.draft)
+      throw new PrepConflictError('A new list is already being prepared')
+    if (state.current?.id === command.listId)
+      throw new PrepInputError('Invalid list')
+    state.draft = {
+      id: command.listId,
       date: command.date,
-      groups: structuredClone(state.menu),
+      groups: copy(state.menu),
       selected: [],
       completed: [],
       notes: '',
-      manualOrder: [],
+      orderAdded: [],
+      orderRemoved: [],
     }
-    // The first prep list is immediately the visible current list. Once a
-    // prep list exists, subsequent starts stay as a draft until finalized.
-    if (state.current) state.draft = list
-    else state.current = list
-  } else if (command.type === 'finalize') {
+  } else if (command.type === 'finalize' || command.type === 'discard') {
     if (!state.draft || state.draft.id !== command.listId)
       throw new PrepConflictError('The draft list has changed')
-    state.current = state.draft
+    if (command.type === 'finalize') state.current = state.draft
     state.draft = null
   } else if (command.type === 'menu') {
-    state.menu = structuredClone(command.groups)
+    if (!sameValue(state.menu, command.base))
+      throw new PrepConflictError('The menu has changed')
+    state.menu = copy(command.groups)
     if (state.current)
       state.current.groups = syncCatalog(state.current, state.menu)
     if (state.draft) state.draft.groups = syncCatalog(state.draft, state.menu)
+  } else if (command.type === 'products') {
+    if (!sameValue(state.products, command.base))
+      throw new PrepConflictError('The products have changed')
+    state.products = copy(command.groups)
   } else {
     const list =
       (state.draft?.id === command.listId ? state.draft : null) ??
       (state.current?.id === command.listId ? state.current : null)
-    if (!list || list.id !== command.listId)
-      throw new PrepConflictError('The current list has changed')
+    if (!list) throw new PrepConflictError('The list has changed')
     if (command.type === 'select') {
       const validIds = new Set(
         list.groups.flatMap((group) => group.items.map((item) => item.id)),
       )
       if (command.ids.some((id) => !validIds.has(id)))
-        throw new PrepInputError('Unknown item')
+        throw new PrepConflictError('The menu has changed')
       list.selected = command.selected
         ? [...new Set([...list.selected, ...command.ids])]
         : list.selected.filter((id) => !command.ids.includes(id))
@@ -447,12 +544,29 @@ export function applyPrepCommand(
       list.groups = syncCatalog(list, state.menu)
     } else if (command.type === 'complete') {
       if (!list.selected.includes(command.id))
-        throw new PrepInputError('Item is not selected')
+        throw new PrepConflictError('Item is not selected')
       list.completed = command.completed
         ? [...new Set([...list.completed, command.id])]
         : list.completed.filter((id) => id !== command.id)
-    } else if (command.type === 'notes') list.notes = command.text
-    else if (command.type === 'order') list.manualOrder = command.items
+    } else if (command.type === 'notes') {
+      if (list.notes !== command.base && list.notes !== command.text)
+        throw new PrepConflictError('The notes have changed')
+      list.notes = command.text
+    } else {
+      const linked = new Set(
+        orderSuggestions(list).map((line) => productKey(line.name)),
+      )
+      for (const name of command.names) {
+        const key = productKey(name)
+        list.orderAdded = list.orderAdded.filter(
+          (added) => productKey(added) !== key,
+        )
+        list.orderRemoved = list.orderRemoved.filter((removed) => removed !== key)
+        // Linked products are ordered unless removed; anything else only when added.
+        if (command.ordered && !linked.has(key)) list.orderAdded.push(name)
+        if (!command.ordered && linked.has(key)) list.orderRemoved.push(key)
+      }
+    }
   }
   state.revision += 1
   return state
@@ -466,6 +580,10 @@ export function selectedGroups(list: PrepList): PrepGroup[] {
     }))
     .filter((group) => group.items.length)
 }
+/** Identity of a product across prep items, the catalog and history. */
+export function productKey(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en')
+}
 export interface OrderSuggestion {
   name: string
   sources: string[]
@@ -475,13 +593,65 @@ export function orderSuggestions(list: PrepList): OrderSuggestion[] {
   for (const group of selectedGroups(list))
     for (const item of group.items)
       for (const ingredient of item.ingredients) {
-        const key = ingredient.trim().toLocaleLowerCase('en')
+        const key = productKey(ingredient)
         const line = result.get(key) || { name: ingredient.trim(), sources: [] }
         const source = `${group.name} · ${item.name}`
         if (!line.sources.includes(source)) line.sources.push(source)
         result.set(key, line)
       }
   return [...result.values()]
+}
+export interface OrderLine {
+  key: string
+  name: string
+  /** Where the product comes from: selected prep, the product catalog or typed in. */
+  section: 'prep' | 'catalog' | 'other'
+  /** Prep items that need it. */
+  sources: string[]
+  /** Catalog group, for catalog products. */
+  groupId?: string
+  groupName?: string
+  ordered: boolean
+}
+/** Every product the order list can show, each once, with whether it is on the order. */
+export function orderLines(
+  list: PrepList,
+  products: ProductGroup[],
+): OrderLine[] {
+  const removed = new Set(list.orderRemoved)
+  const added = new Map(list.orderAdded.map((name) => [productKey(name), name]))
+  const lines: OrderLine[] = orderSuggestions(list).map((line) => {
+    const key = productKey(line.name)
+    return {
+      key,
+      name: line.name,
+      section: 'prep',
+      sources: line.sources,
+      ordered: added.has(key) || !removed.has(key),
+    }
+  })
+  const seen = new Set(lines.map((line) => line.key))
+  for (const group of products)
+    for (const name of group.products) {
+      const key = productKey(name)
+      if (seen.has(key)) continue
+      seen.add(key)
+      lines.push({
+        key,
+        name,
+        section: 'catalog',
+        sources: [],
+        groupId: group.id,
+        groupName: group.name,
+        ordered: added.has(key),
+      })
+    }
+  for (const [key, name] of added)
+    if (!seen.has(key)) {
+      seen.add(key)
+      lines.push({ key, name, section: 'other', sources: [], ordered: true })
+    }
+  return lines
 }
 export interface ReceiptLine {
   text: string
@@ -495,9 +665,28 @@ export function prepReceipt(list: PrepList): ReceiptLine[] {
   if (list.notes) lines.push({ text: list.notes, kind: 'note' })
   return lines
 }
-export function orderReceipt(list: PrepList): ReceiptLine[] {
-  return [
-    ...orderSuggestions(list).map((item) => item.name),
-    ...list.manualOrder,
-  ].map((text) => ({ text, kind: 'item' }))
+export function orderReceipt(
+  list: PrepList,
+  products: ProductGroup[],
+): ReceiptLine[] {
+  return orderLines(list, products)
+    .filter((line) => line.ordered)
+    .map((line) => ({ text: line.name, kind: 'item' }))
+}
+/** The receipt as plain text, for sending in a message. */
+export function receiptText(
+  title: string,
+  date: string,
+  lines: ReceiptLine[],
+): string {
+  const text = [`${title} · ${date}`]
+  let previous: ReceiptLine['kind'] | undefined
+  for (const line of lines) {
+    // Items stay together under their heading; everything else gets a blank line.
+    if (line.kind !== 'item' || !previous || previous === 'note')
+      text.push('')
+    text.push(line.kind === 'item' ? `- ${line.text}` : line.text)
+    previous = line.kind
+  }
+  return text.join('\n')
 }
