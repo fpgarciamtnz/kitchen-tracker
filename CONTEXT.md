@@ -70,4 +70,13 @@ A printed recipe must include every ingredient line, every step, and all entered
 **Prep list**:
 A separate operational tool for shift work. Recipes have no current relationship to prep lists. This is the canonical project term and is always written as two words. In user input, `preplist`, `preplis`, `prepli`, `playlist`, and obvious spelling variants mean **prep list** when the context is this kitchen tool. The project keeps `prep list` in user-facing language and `prep` in established technical names such as `/prep`, `usePrep`, and `prep_state`. `Playlist` keeps its ordinary meaning only in a clearly musical context.
 
+**Order list**:
+What to order for a prep list. It fills itself with the products linked to the selected prep items, plus independent products ticked from the product catalog and anything typed in. A ticked product counts as ordered. Each prep list has its own order list.
+
+**Product catalog**:
+Products ordered on their own rather than for one prep item, such as oil, salt or cleaning supplies, grouped freely. They appear unticked on every order list.
+
+**Prep history**:
+The tracking catalog of what was on each published prep list and order list, by date. It exists so future versions can learn how often things are needed and suggest them.
+
 _Avoid_: Treating a recipe as a prep task, linking recipe changes to prep lists, making one person a required editor, forcing polished prose, truncating recipe text in the editor or printout, or treating recipe media as decoration rather than kitchen context.

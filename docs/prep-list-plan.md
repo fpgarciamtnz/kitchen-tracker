@@ -2,6 +2,30 @@
 
 The feature implements the September 16 interview, including the final corrections about free text and independent order products.
 
+## October 2026 revision
+
+These decisions replace the earlier points about the order list position and the absence of history.
+
+- The prep list and the order list are the core. Cleaning stays as a secondary feature and was not changed.
+- Every new prep list is a draft until it is published. Starting again never discards someone else's draft; discarding is explicit.
+- The order list has its own tab and fills itself from the selected prep: linked products start ticked. Independent products (oil, salt, cleaning supplies) live in a product catalog and start unticked. Anything else can be typed. A ticked product counts as ordered.
+- Each order list belongs to its prep list. Publishing a new list leaves the previous order behind. Printing and sharing as text are the main outputs.
+- Commands describe one change, so the server applies them to the latest state. Only notes, menu and catalog edits carry the version they started from and conflict when someone else changed it.
+- The client copies state and commands as JSON. Copying Vue's reactive state with `structuredClone` threw, and since `3aaa751` every prep action from the screen was silently discarded.
+
+## History and future suggestions
+
+`prep_history` stores one row per prep item and per ordered product on each published list: list ID and date, item ID or product key, name, dish or product group, where the product came from (`prep`, `catalog`, `other`), when it was first recorded and when an item was ticked done. Rows follow the list while it is current and stay after it is replaced. Drafts and discarded lists are not history.
+
+Stages:
+
+1. **Now: record and show.** Rows are written on every change to the published list. The creator and the order list show when each thing was last on a list.
+2. **Describe.** From the same rows, compute per item and product the usual interval between lists (median days), weekday patterns and how often a selected item is actually ticked done. Show it as a hint, such as "usually every 3 days". No new data needed.
+3. **Suggest.** When starting a list, mark items whose usual interval has passed as suggestions the cook confirms. Their linked products follow into the order list as they do today. Start with simple interval rules; consider a statistical model only once there are months of rows and the rules are visibly wrong.
+4. **Quantities (optional).** Only if quantities are ever recorded. Nothing stores them today, by design.
+
+Product identity is the normalized name (`productKey`), so renaming a product starts a new history line. Prep items keep their ID across renames.
+
 ## Confirmed requirements
 
 - The closing cook creates the next shift's list. The morning cook reads it on paper or a phone. Completion in the app is optional.

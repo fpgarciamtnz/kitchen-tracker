@@ -37,7 +37,7 @@ La lista inicial está en [`shared/cleaning.ts`](./shared/cleaning.ts). El estad
 
 ## Idioma
 
-Nuxt i18n usa inglés (`en`) como único idioma y como idioma predeterminado, sin detección del navegador ni prefijo en las rutas. Los textos, incluidas las tareas, están en `i18n/locales/en.json`. Las rutas son `/prep`, `/prep/create`, `/cleaning` y `/profile`. Cleaning tracker reúne las listas semanal y profunda, con su orden e historial independientes. `/weekly` y `/deep` redirigen a la sección correspondiente; las rutas antiguas en español siguen funcionando.
+Nuxt i18n usa inglés (`en`) como único idioma y como idioma predeterminado, sin detección del navegador ni prefijo en las rutas. Los textos, incluidas las tareas, están en `i18n/locales/en.json`. Las rutas son `/prep`, `/prep/create`, `/prep/edit`, `/order`, `/cleaning` y `/profile`. Cleaning tracker es una función secundaria: reúne las listas semanal y profunda, con su orden e historial independientes. `/weekly` y `/deep` redirigen a la sección correspondiente; las rutas antiguas en español siguen funcionando.
 
 ## Logs y diagnóstico
 
@@ -58,13 +58,23 @@ pnpm run deploy
 
 El commit `41e9cc0` sustituyó D1 por un namespace KV sin configurar. La corrección restaura D1 y su formato de datos original; no requiere crear KV ni migrar los registros de limpieza.
 
-## Prep list
+## Prep list y order list
 
-La entrada `/` abre `/prep`, la lista vigente con solo los ítems seleccionados. La navegación distingue Prep list, Create prep y Cleaning. El enlace Manage prep items permite crear el catálogo antes de empezar una lista. `/prep/create` confirma el reemplazo y empieza con cero ítems; `/prep/create?edit=1` permite continuar la lista actual. `/prep/menu` configura platos, genéricos, ítems y los ingredientes que recuerdan qué pedir. Las selecciones y el tachado se guardan al pulsar. Los campos de texto tienen su propio botón de guardar.
+La entrada `/` abre `/prep`, la lista publicada con solo los ítems seleccionados. La navegación tiene Prep list, Order list, Cleaning y Profile.
 
-Las notas pertenecen solo al turno. La order list se abre al final de ambas vistas y combina ingredientes vinculados con productos manuales. No hace pedidos ni calcula cantidades. Los cambios del menú conservan las tareas ya seleccionadas; al empezar otra lista se usa el menú actualizado.
+Toda prep list nueva empieza como borrador en `/prep/create` y se ve en la cocina solo al pulsar **Publish prep list**. Mientras tanto la lista anterior sigue visible y `/prep` muestra un aviso para continuar el borrador. Empezar otra lista nunca borra un borrador ajeno: hay que descartarlo de forma explícita. `/prep/edit` cambia la lista publicada y `/prep/create?edit=1` redirige ahí. `/prep/menu` configura platos, ítems y los productos que necesita cada ítem.
 
-El estado vive en `prep_state`, en la misma conexión D1, con revisión atómica para detectar cambios de otro móvil. La migración nueva es `server/db/migrations/sqlite/0001_create_prep_state.sql`. NuxtHub la aplica en desarrollo y `pnpm run deploy` la aplica en producción antes de publicar el Worker. Requiere permisos de escritura en D1. Para reparar una instalación ya desplegada sin publicar código, ejecuta `pnpm run build` y `pnpm run db:migrate`. Si falta esta tabla, `/api/prep` devuelve 503 aunque el inicio de sesión y la limpieza funcionen.
+La order list (`/order`) se rellena sola: al seleccionar un ítem, sus productos aparecen marcados. Quien hace el pedido desmarca lo que todavía hay, marca productos del catálogo independiente (aceite, sal, limpieza…, editable en `/order/products`) y añade cualquier otro producto a mano. Un producto marcado se considera pedido. Pertenece a su prep list: al publicar una lista nueva, la order list anterior deja de usarse. No hace pedidos ni calcula cantidades.
+
+Ambas listas se imprimen, se descargan en PDF o se comparten como texto (WhatsApp o cualquier app; sin menú de compartir, el texto se copia).
+
+El estado vive en `prep_state`, en la misma conexión D1. Cada comando describe un cambio concreto, así que el servidor lo aplica sobre la última versión aunque otro móvil haya guardado antes. Solo hay conflicto real cuando dos personas editan a la vez las mismas notas, el menú o el catálogo, o cuando la lista ya no existe. La escritura sigue protegida por una revisión atómica.
+
+### Historial (seguimiento)
+
+Cada lista publicada deja una fila por ítem y por producto pedido en `prep_history` (migración `0003_create_prep_history.sql`), con la fecha de la lista y cuándo se tachó cada tarea. Al crear una lista y en la order list se muestra «Last: …» con la última vez. Si la tabla falta, la lista se guarda igualmente y el log registra `prep_history` con `missing_table`. El plan por fases para usar este historial está en [docs/prep-list-plan.md](docs/prep-list-plan.md#history-and-future-suggestions).
+
+Las migraciones están en `server/db/migrations/sqlite/`. NuxtHub las aplica en desarrollo y `pnpm run deploy` las aplica en producción antes de publicar el Worker. Requiere permisos de escritura en D1. Para reparar una instalación ya desplegada sin publicar código, ejecuta `pnpm run build` y `pnpm run db:migrate`. Si falta `prep_state`, `/api/prep` devuelve 503 aunque el inicio de sesión y la limpieza funcionen.
 
 La impresión genera PDFs de 72 mm y abre Star PassPRNT con el mismo protocolo que la aplicación anterior. Requiere Star PassPRNT instalado y conectado a la impresora de cocina. También se puede descargar el PDF. Los recibos incluyen lo seleccionado y las notas completas, aunque se hayan tachado tareas en el móvil. La fecha se toma de la lista y no cambia al reimprimir por la mañana.
 

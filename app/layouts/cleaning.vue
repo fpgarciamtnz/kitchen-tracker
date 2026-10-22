@@ -1,18 +1,16 @@
 <script setup lang="ts">
-import { ListPlus, Sparkles, UserRound, ClipboardList } from '@lucide/vue'
+import { ShoppingCart, Sparkles, UserRound, ClipboardList } from '@lucide/vue'
 
 const route = useRoute()
 const { t } = useI18n()
 const navigation = [
   { to: '/prep', label: 'nav.prep', icon: ClipboardList },
-  { to: '/prep/create?edit=1', label: 'nav.createPrep', icon: ListPlus },
+  { to: '/order', label: 'nav.order', icon: ShoppingCart },
   { to: '/cleaning', label: 'nav.cleaning', icon: Sparkles },
   { to: '/profile', label: 'nav.profile', icon: UserRound }
 ]
 function isActive(to: string) {
-  return to.startsWith('/prep/create')
-    ? route.path.startsWith('/prep/')
-    : route.path === to
+  return route.path === to || route.path.startsWith(`${to}/`)
 }
 </script>
 

@@ -6,4 +6,4 @@ export const cleaningState = sqliteTable('cleaning_state', {
   updatedAt: integer('updated_at').notNull()
 })
 
-export { prepState } from './prep-schema'
+export { prepHistory, prepState } from './prep-schema'

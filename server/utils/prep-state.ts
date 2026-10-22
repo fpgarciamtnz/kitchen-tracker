@@ -4,11 +4,13 @@ import { and, eq } from 'drizzle-orm'
 import {
   applyPrepCommand,
   emptyPrepState,
+  normalizePrepState,
   PrepConflictError,
   PrepInputError,
 } from '../../shared/prep'
-import type { PrepRequest, PrepState } from '../../shared/prep'
+import type { PrepList, PrepRequest, PrepState, StoredPrepState } from '../../shared/prep'
 import { prepState } from '../db/prep-schema'
+import { queryPrepHistory, syncPrepHistory } from './prep-history'
 
 function upgradeLegacyMenu(state: PrepState): PrepState {
   // Before the hosted menu was copied, the initial catalog was the single
@@ -26,17 +28,24 @@ function upgradeLegacyMenu(state: PrepState): PrepState {
 async function load() {
   const row = await db.select().from(prepState).where(eq(prepState.id, 1)).get()
   if (!row) return { exists: false, state: emptyPrepState() }
-  const state = upgradeLegacyMenu(JSON.parse(row.document) as PrepState) as PrepState & { draft?: PrepState['draft'] }
-  // States written before concurrent prep lists existed have no draft field.
-  const legacyState = state as PrepState & { draft?: PrepState['draft'] }
-  if (legacyState.draft === undefined) legacyState.draft = null
+  const stored = JSON.parse(row.document) as StoredPrepState
   if (
-    !Array.isArray(state.menu) ||
-    !('current' in state) ||
-    state.revision !== row.revision
+    !Array.isArray(stored.menu) ||
+    !('current' in stored) ||
+    stored.revision !== row.revision
   )
     throw new Error('Invalid stored state')
-  return { exists: true, state }
+  return { exists: true, state: upgradeLegacyMenu(normalizePrepState(stored)) }
+}
+function databaseReason(cause: unknown) {
+  // Drizzle wraps the database error. Inspect causes, but never log SQL or stored content.
+  let error = cause
+  for (let depth = 0; depth < 5 && error instanceof Error; depth++) {
+    if (/no such table:\s*prep_(state|history)/i.test(error.message))
+      return 'missing_table'
+    error = error.cause
+  }
+  return 'request_failed'
 }
 function failure(cause: unknown, log: RequestLogger): never {
   if (cause instanceof PrepConflictError)
@@ -46,21 +55,28 @@ function failure(cause: unknown, log: RequestLogger): never {
     })
   if (cause instanceof PrepInputError)
     throw createError({ statusCode: 400, statusMessage: cause.message })
-  // Drizzle wraps the database error. Inspect causes, but never log SQL or stored content.
-  let reason = 'request_failed'
-  let error = cause
-  for (let depth = 0; depth < 5 && error instanceof Error; depth++) {
-    if (/no such table:\s*prep_state/i.test(error.message)) {
-      reason = 'missing_table'
-      break
-    }
-    error = error.cause
-  }
-  log.set({ database: { operation: 'prep', reason } })
+  log.set({ database: { operation: 'prep', reason: databaseReason(cause) } })
   throw createError({
     statusCode: 503,
     statusMessage: 'Prep storage request failed',
   })
+}
+async function recordHistory(previous: PrepState, next: PrepState, log: RequestLogger) {
+  // Only published lists are history. A finalize also records the list it replaced.
+  const lists = [next.current, previous.current?.id === next.current?.id ? null : previous.current]
+    .filter((list): list is PrepList => !!list)
+  const changed =
+    JSON.stringify([previous.current, previous.products]) !==
+    JSON.stringify([next.current, next.products])
+  if (!changed || !lists.length) return
+  try {
+    await syncPrepHistory(lists, next.products, next.revision)
+  } catch (cause) {
+    // The list itself is saved. The next change of the same list rewrites its history.
+    log.warn('Prep history was not recorded', {
+      database: { operation: 'prep_history', reason: databaseReason(cause) },
+    })
+  }
 }
 export async function readPrep(log: RequestLogger) {
   try {
@@ -69,34 +85,47 @@ export async function readPrep(log: RequestLogger) {
     failure(cause, log)
   }
 }
+export async function readPrepHistory(excludeListId: string, log: RequestLogger) {
+  try {
+    return await queryPrepHistory(excludeListId)
+  } catch (cause) {
+    failure(cause, log)
+  }
+}
+// Commands say what changed, so a phone that has not seen another phone's
+// latest change can still save on top of it. Only a real clash is a conflict.
+const ATTEMPTS = 3
 export async function updatePrep(request: PrepRequest, log: RequestLogger) {
   try {
-    const previous = await load()
-    if (previous.state.revision !== request.revision)
-      throw new PrepConflictError()
-    const next = applyPrepCommand(previous.state, request.command)
-    const values = { revision: next.revision, document: JSON.stringify(next) }
-    // A stale device cannot replace a newer list or silently overwrite another cook's work.
-    const result = previous.exists
-      ? await db
-          .update(prepState)
-          .set(values)
-          .where(
-            and(
-              eq(prepState.id, 1),
-              eq(prepState.revision, previous.state.revision),
-            ),
-          )
-          .returning({ revision: prepState.revision })
-          .get()
-      : await db
-          .insert(prepState)
-          .values({ id: 1, ...values })
-          .onConflictDoNothing()
-          .returning({ revision: prepState.revision })
-          .get()
-    if (!result) throw new PrepConflictError()
-    return next
+    for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+      const previous = await load()
+      const next = applyPrepCommand(previous.state, request.command)
+      const values = { revision: next.revision, document: JSON.stringify(next) }
+      // The revision guard makes the write atomic: if another write landed after
+      // loading, nothing is saved and the command is applied again on top of it.
+      const result = previous.exists
+        ? await db
+            .update(prepState)
+            .set(values)
+            .where(
+              and(
+                eq(prepState.id, 1),
+                eq(prepState.revision, previous.state.revision),
+              ),
+            )
+            .returning({ revision: prepState.revision })
+            .get()
+        : await db
+            .insert(prepState)
+            .values({ id: 1, ...values })
+            .onConflictDoNothing()
+            .returning({ revision: prepState.revision })
+            .get()
+      if (!result) continue
+      await recordHistory(previous.state, next, log)
+      return next
+    }
+    throw new PrepConflictError()
   } catch (cause) {
     failure(cause, log)
   }
